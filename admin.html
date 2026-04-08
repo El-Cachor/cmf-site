@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration – CMF Brain Teaser</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0A1628;--bg2:#0F2040;--gold:#D4AF37;--gold-l:#F0D060;--fg:#FFFFFF;--fg2:#A0B0C0;--success:#00D4AA;--error:#FF4444;--card:rgba(255,255,255,0.05);--border:rgba(212,175,55,0.2)}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow-x:hidden;min-height:100vh}
+
+    /* PASSWORD GATE */
+    #gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+    .gate-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:3rem 2.5rem;width:100%;max-width:420px;text-align:center;backdrop-filter:blur(20px)}
+    .gate-logo{height:60px;margin-bottom:1.5rem;border-radius:8px}
+    .gate-logo-fb{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold);margin-bottom:1.5rem;letter-spacing:2px}
+    .gate-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+    .gate-sub{color:var(--fg2);font-size:.875rem;margin-bottom:2rem}
+    .gate-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:.875rem 1rem;color:var(--fg);font-size:1rem;outline:none;text-align:center;letter-spacing:2px;transition:border-color .2s;font-family:'JetBrains Mono',monospace}
+    .gate-input:focus{border-color:var(--gold)}
+    .gate-input.shake{animation:shake .4s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+    .gate-err{color:var(--error);font-size:.8rem;margin-top:.75rem;min-height:1.2em}
+    .gate-btn{width:100%;margin-top:1.5rem;padding:1rem;border:none;border-radius:10px;background:linear-gradient(135deg,#B8960C,var(--gold),var(--gold-l));color:var(--bg);font-weight:700;font-size:1rem;cursor:pointer;transition:transform .2s;font-family:'Inter',sans-serif}
+    .gate-btn:hover{transform:translateY(-2px)}
+
+    /* ADMIN LAYOUT */
+    #admin{display:none;flex-direction:column;min-height:100vh}
+    .admin-header{background:rgba(15,32,64,.95);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+    .admin-logo{font-family:'Playfair Display',serif;color:var(--gold);font-weight:700;font-size:1.1rem;letter-spacing:1px;margin-right:1rem}
+    .admin-tabs{display:flex;gap:.25rem;flex:1;flex-wrap:wrap}
+    .atab{background:transparent;border:none;color:var(--fg2);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:500;transition:all .2s;white-space:nowrap;font-family:'Inter',sans-serif}
+    .atab:hover{background:var(--card);color:var(--fg)}
+    .atab.active{background:rgba(212,175,55,.15);color:var(--gold)}
+    .logout-btn{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#FF4444;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:'Inter',sans-serif;transition:all .2s}
+    .logout-btn:hover{background:rgba(255,68,68,.25)}
+
+    .admin-body{flex:1;padding:1.5rem}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+
+    /* CARDS / GRID */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem}
+    .stat-card-val{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--gold)}
+    .stat-card-lbl{font-size:.78rem;color:var(--fg2);text-transform:uppercase;letter-spacing:1px;margin-top:.25rem}
+    .quick-actions{display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .qa-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:.6rem 1.2rem;border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .2s;font-family:'Inter',sans-serif}
+    .qa-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .qa-btn.danger{border-color:rgba(255,68,68,.3);color:#FF8888}
+    .qa-btn.success-btn{border-color:rgba(0,212,170,.3);color:var(--success)}
+
+    /* ACTIVITY FEED */
+    .activity-feed{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;max-height:350px;overflow-y:auto}
+    .feed-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:1rem}
+    .feed-item{display:flex;align-items:flex-start;gap:.75rem;padding:.625rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.83rem}
+    .feed-item:last-child{border-bottom:none}
+    .feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+    .feed-dot.reg{background:#63B3ED}
+    .feed-dot.score{background:var(--success)}
+    .feed-text{flex:1;color:var(--fg2)}
+    .feed-time{color:var(--fg2);font-size:.75rem;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+
+    /* FORM FIELDS */
+    .section-title{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;margin-bottom:1rem;color:var(--fg)}
+    .form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1rem}
+    .form-group{display:flex;flex-direction:column;gap:.4rem}
+    label.fl{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--fg2)}
+    input.fi,select.fi,textarea.fi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.75rem 1rem;font-size:.875rem;color:var(--fg);outline:none;font-family:'Inter',sans-serif;transition:border-color .2s;width:100%}
+    input.fi:focus,select.fi:focus,textarea.fi:focus{border-color:var(--gold)}
+    textarea.fi{resize:vertical;min-height:80px}
+    select.fi option{background:var(--bg2)}
+    .save-btn{background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);border:none;border-radius:8px;padding:.6rem 1.25rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .save-btn:hover{transform:translateY(-1px)}
+    .add-btn{background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.3);color:var(--success);border-radius:8px;padding:.6rem 1.25rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .add-btn:hover{background:rgba(0,212,170,.25)}
+
+    /* TABLE */
+    .admin-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+    .admin-table th{text-align:left;padding:.75rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--fg2);background:rgba(255,255,255,.03);border-bottom:1px solid var(--border)}
+    .admin-table td{padding:.75rem 1rem;font-size:.83rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+    .admin-table tr:last-child td{border-bottom:none}
+    .admin-table tr:hover td{background:rgba(255,255,255,.02)}
+    .table-wrap{overflow-x:auto;margin-top:1rem}
+    .action-btn{background:none;border:1px solid var(--border);color:var(--fg2);padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-size:.75rem;font-family:'Inter',sans-serif;transition:all .2s}
+    .action-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .action-btn.del{border-color:rgba(255,68,68,.3);color:#FF6666}
+    .action-btn.del:hover{border-color:var(--error);color:var(--error)}
+
+    /* STATUS BADGES */
+    .badge{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+    .b-pending{background:rgba(160,176,192,.15);color:var(--fg2);border:1px solid rgba(160,176,192,.3)}
+    .b-assigned{background:rgba(99,179,237,.15);color:#63B3ED;border:1px solid rgba(99,179,237,.3)}
+    .b-passed{background:rgba(0,212,170,.15);color:var(--success);border:1px solid rgba(0,212,170,.3)}
+    .b-noshow{background:rgba(251,191,36,.15);color:#FBB824;border:1px solid rgba(251,191,36,.3)}
+    .b-cancelled{background:rgba(255,68,68,.15);color:var(--error);border:1px solid rgba(255,68,68,.3)}
+    .b-active{background:rgba(0,212,170,.15);color:var(--success);border:1px solid rgba(0,212,170,.3)}
+    .b-inactive{background:rgba(255,68,68,.15);color:var(--error);border:1px solid rgba(255,68,68,.3)}
+
+    /* TOGGLE */
+    .toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:12px;cursor:pointer;transition:.3s}
+    .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle input:checked+.toggle-slider{background:var(--gold)}
+    .toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
+
+    /* SCORE ENTRY */
+    .search-big{width:100%;background:rgba(255,255,255,.07);border:2px solid var(--border);border-radius:16px;padding:1rem 1.5rem;font-size:1.1rem;color:var(--fg);outline:none;font-family:'Inter',sans-serif;margin-bottom:1rem;transition:border-color .2s}
+    .search-big:focus{border-color:var(--gold)}
+    .autocomplete{background:rgba(15,32,64,.98);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none;max-height:250px;overflow-y:auto}
+    .ac-item{padding:.875rem 1.25rem;cursor:pointer;font-size:.9rem;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.04)}
+    .ac-item:last-child{border-bottom:none}
+    .ac-item:hover{background:rgba(212,175,55,.1);color:var(--gold)}
+    .candidate-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;display:none}
+    .cc-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem}
+    .cc-name{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700}
+    .cc-school{color:var(--fg2);font-size:.9rem}
+    .score-entry{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.75rem;display:none}
+    .score-row{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem}
+    .score-label{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--fg2);width:160px;flex-shrink:0}
+    .score-ctrl{display:flex;align-items:center;gap:.75rem}
+    .sc-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--fg);font-size:1.2rem;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+    .sc-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .sc-num{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--gold);width:60px;text-align:center}
+    .score-slider{flex:1;accent-color:var(--gold)}
+    .total-display{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--gold);text-align:center;padding:1rem;background:rgba(212,175,55,.05);border-radius:12px;border:1px solid rgba(212,175,55,.2);margin-bottom:1.25rem}
+    .confirm-btn{width:100%;padding:1rem;border:none;border-radius:12px;background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);font-weight:700;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .confirm-btn:hover{transform:translateY(-2px)}
+    .cancel-btn{width:100%;padding:.875rem;border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--fg2);font-weight:600;font-size:.9rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;margin-top:.5rem}
+    .cancel-btn:hover{border-color:var(--gold);color:var(--fg)}
+    .kb-hint{font-size:.75rem;color:var(--fg2);text-align:center;margin-top:.5rem}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:2rem;right:2rem;background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.4);color:var(--success);padding:1rem 1.5rem;border-radius:12px;font-weight:600;z-index:9998;transform:translateY(100px);opacity:0;transition:all .3s;font-size:.9rem}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.error{background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.4);color:var(--error)}
+
+    /* CONTENT MANAGER */
+    .content-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem}
+    .cs-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:1rem}
+    .cs-row{display:flex;gap:.75rem;align-items:flex-end;margin-bottom:.75rem}
+    .cs-row .fi{flex:1}
+
+    /* SETTINGS */
+    .danger-zone{background:rgba(255,68,68,.05);border:1px solid rgba(255,68,68,.2);border-radius:16px;padding:1.5rem;margin-top:1.5rem}
+    .danger-title{color:var(--error);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:1rem}
+
+    /* Q-CARDS */
+    .q-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;transition:border-color .2s}
+    .q-card.correct{border-color:rgba(0,212,170,.4);background:rgba(0,212,170,.04)}
+    .q-card.incorrect{border-color:rgba(255,68,68,.3);background:rgba(255,68,68,.03)}
+    .q-btn{flex:1;padding:.4rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--fg2);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+    .q-btn.active-green{background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);color:var(--success)}
+    .q-btn.active-red{background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.4);color:var(--error)}
+    .score-display{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;display:flex;flex-direction:column;gap:.25rem}
+    .score-display label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--fg2)}
+    /* TIER BADGES */
+    .tier-badge{padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600}
+    .tier-gold{background:linear-gradient(135deg,#D4AF37,#F0D060);color:#0A1628}
+    .tier-silver{background:linear-gradient(135deg,#C0C0C0,#E0E0E0);color:#0A1628}
+    .tier-bronze{background:linear-gradient(135deg,#CD7F32,#E8A060);color:#0A1628}
+    .badge-pending{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.7rem;font-weight:700;background:rgba(160,176,192,.15);color:var(--fg2);border:1px solid rgba(160,176,192,.3)}
+    .badge-approved{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.7rem;font-weight:700;background:rgba(0,212,170,.15);color:var(--success);border:1px solid rgba(0,212,170,.3)}
+    .badge-rejected{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.7rem;font-weight:700;background:rgba(255,68,68,.15);color:var(--error);border:1px solid rgba(255,68,68,.3)}
+    .toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0;display:inline-block}
+    .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-switch .slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:12px;cursor:pointer;transition:.3s}
+    .toggle-switch .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    .toggle-switch input:checked+.slider{background:var(--gold)}
+    .toggle-switch input:checked+.slider::before{transform:translateX(20px)}
+    .btn-gold{background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);border:none;border-radius:8px;padding:.6rem 1.25rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .btn-gold:hover{transform:translateY(-1px)}
+    .btn-success{background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.3);color:var(--success);border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .btn-error{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:var(--error);border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--fg2);border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+    .btn-sm{font-size:.72rem;padding:.25rem .55rem}
+    .data-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+    .data-table th{text-align:left;padding:.75rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--fg2);background:rgba(255,255,255,.03);border-bottom:1px solid var(--border)}
+    .data-table td{padding:.75rem 1rem;font-size:.83rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(255,255,255,.02)}
+    .empty-state{text-align:center;color:var(--fg2);padding:3rem;font-size:.9rem}
+    .skeleton{background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    #offline-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#FF4444;color:white;text-align:center;padding:10px;z-index:10000;font-size:.875rem}
+
+    @media(max-width:900px){.admin-tabs{gap:0}.atab{font-size:.78rem;padding:.4rem .7rem}}
+    @media(max-width:600px){.admin-header{flex-wrap:wrap}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <img src="logo-cmf.jpg.jpg" alt="CMF" class="gate-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+    <div class="gate-logo-fb" style="display:none">CMF</div>
+    <h2 class="gate-title">CMF Admin Panel</h2>
+    <p class="gate-sub">Accès réservé aux administrateurs</p>
+    <input type="password" class="gate-input" id="gate-pw" placeholder="••••••••••" autocomplete="current-password" />
+    <div class="gate-err" id="gate-err"></div>
+    <button class="gate-btn" id="gate-submit">Se connecter</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin">
+  <div class="admin-header">
+    <span class="admin-logo">CMF Admin</span>
+    <div class="admin-tabs">
+      <button class="atab active" data-pane="dashboard">Dashboard</button>
+      <button class="atab" data-pane="content">Contenu</button>
+      <button class="atab" data-pane="schools">Écoles</button>
+      <button class="atab" data-pane="juries">Jurys</button>
+      <button class="atab" data-pane="candidates">Candidats</button>
+      <button class="atab" data-pane="scores">Scores</button>
+      <button class="atab" data-pane="settings">Paramètres</button>
+      <button class="atab" data-pane="school-requests">Demandes Écoles <span id="requests-badge" style="display:none;background:#FF4444;color:white;border-radius:100px;padding:1px 7px;font-size:.7rem;margin-left:4px;vertical-align:middle"></span></button>
+      <button class="atab" data-pane="sponsors">Sponsors</button>
+    </div>
+    <button id="lang-btn" style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.2);color:var(--gold);font-size:.8rem;font-weight:700;padding:.35rem .9rem;border-radius:100px;cursor:pointer;letter-spacing:1px;margin-left:auto">EN</button>
+    <a href="index.html" id="back-site-btn" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #D4AF37;color:#D4AF37;border-radius:6px;text-decoration:none;font-size:0.85rem;transition:all 0.2s;margin-right:10px;" onmouseover="this.style.background='rgba(212,175,55,0.1)'" onmouseout="this.style.background='transparent'">&#8592; Retour au site</a>
+    <button class="logout-btn" id="logout-btn">Déconnexion</button>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- DASHBOARD -->
+    <div class="tab-pane active" id="pane-dashboard">
+      <div class="stats-grid" id="dash-stats">
+        <div class="stat-card"><div class="stat-card-val" id="d-regs">—</div><div class="stat-card-lbl">Total inscrits</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="d-scores">—</div><div class="stat-card-lbl">Scores saisis</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="d-today">—</div><div class="stat-card-lbl">Scores aujourd'hui</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="d-spots">—</div><div class="stat-card-lbl">Places restantes</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="d-juries">—</div><div class="stat-card-lbl">Jurys actifs</div></div>
+        <div class="stat-card"><div class="stat-card-val" id="d-status" style="font-size:1rem">—</div><div class="stat-card-lbl">Statut</div></div>
+      </div>
+      <div class="quick-actions">
+        <button class="qa-btn" id="qa-toggle-reg">Ouvrir/Fermer inscriptions</button>
+        <select class="qa-btn fi" id="qa-status" style="cursor:pointer">
+          <option value="">Changer statut...</option>
+          <option value="upcoming">À venir</option>
+          <option value="registration">Inscriptions</option>
+          <option value="qualif">Qualifications</option>
+          <option value="final">Finale</option>
+          <option value="finished">Terminé</option>
+        </select>
+        <button class="qa-btn" id="qa-export">Exporter CSV</button>
+      </div>
+      <div class="activity-feed">
+        <div class="feed-title">Activité récente</div>
+        <div id="feed-list"><div style="color:var(--fg2);font-size:.85rem">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- CONTENT MANAGER -->
+    <div class="tab-pane" id="pane-content">
+      <h2 class="section-title">Gestionnaire de contenu</h2>
+      <div class="content-section">
+        <div class="cs-title">Section Héros</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Titre FR</label><div class="cs-row"><input class="fi" id="c-heroTitle_fr" /><button class="save-btn" onclick="saveContent('heroTitle_fr','c-heroTitle_fr')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Titre EN</label><div class="cs-row"><input class="fi" id="c-heroTitle_en" /><button class="save-btn" onclick="saveContent('heroTitle_en','c-heroTitle_en')">Sauvegarder</button></div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Sous-titre FR</label><div class="cs-row"><textarea class="fi" id="c-heroSubtitle_fr"></textarea><button class="save-btn" onclick="saveContent('heroSubtitle_fr','c-heroSubtitle_fr')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Sous-titre EN</label><div class="cs-row"><textarea class="fi" id="c-heroSubtitle_en"></textarea><button class="save-btn" onclick="saveContent('heroSubtitle_en','c-heroSubtitle_en')">Sauvegarder</button></div></div>
+        </div>
+      </div>
+      <div class="content-section">
+        <div class="cs-title">Section À propos</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Texte FR</label><div class="cs-row"><textarea class="fi" id="c-aboutText_fr" style="min-height:120px"></textarea><button class="save-btn" onclick="saveContent('aboutText_fr','c-aboutText_fr')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Texte EN</label><div class="cs-row"><textarea class="fi" id="c-aboutText_en" style="min-height:120px"></textarea><button class="save-btn" onclick="saveContent('aboutText_en','c-aboutText_en')">Sauvegarder</button></div></div>
+        </div>
+      </div>
+      <div class="content-section">
+        <div class="cs-title">Footer &amp; Réseaux</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Email de contact</label><div class="cs-row"><input class="fi" id="c-footerContact" type="email" /><button class="save-btn" onclick="saveContent('footerContact','c-footerContact')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">URL Instagram</label><div class="cs-row"><input class="fi" id="c-instagramUrl" type="url" /><button class="save-btn" onclick="saveContent('instagramUrl','c-instagramUrl')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">URL LinkedIn</label><div class="cs-row"><input class="fi" id="c-linkedinUrl" type="url" /><button class="save-btn" onclick="saveContent('linkedinUrl','c-linkedinUrl')">Sauvegarder</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHOOLS -->
+    <div class="tab-pane" id="pane-schools">
+      <h2 class="section-title">Gestion des écoles</h2>
+      <div class="content-section">
+        <div class="cs-title">Ajouter une école</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Nom *</label><input class="fi" id="add-s-name" placeholder="École Centrale Paris" /></div>
+          <div class="form-group"><label class="fl">Ville</label><input class="fi" id="add-s-city" placeholder="Paris" /></div>
+          <div class="form-group"><label class="fl">Type</label><select class="fi" id="add-s-type"><option value="engineering">Ingénieur</option><option value="business">Business</option><option value="university">Université</option></select></div>
+        </div>
+        <button class="add-btn" id="add-school-btn">+ Ajouter l'école</button>
+      </div>
+      <div class="table-wrap"><table class="admin-table" id="schools-table">
+        <thead><tr><th>Nom</th><th>Ville</th><th>Type</th><th>Candidats</th><th>Actif</th><th>Actions</th></tr></thead>
+        <tbody id="schools-tbody"><tr><td colspan="6" style="text-align:center;color:var(--fg2);padding:2rem">Chargement...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- JURIES -->
+    <div class="tab-pane" id="pane-juries">
+      <h2 class="section-title">Gestion des jurys</h2>
+      <div class="content-section">
+        <div class="cs-title">Ajouter un jury</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Prénom *</label><input class="fi" id="add-j-fn" placeholder="Marie" /></div>
+          <div class="form-group"><label class="fl">Nom *</label><input class="fi" id="add-j-ln" placeholder="Dupont" /></div>
+          <div class="form-group"><label class="fl">Créneau</label><select class="fi" id="add-j-slot"><option value="morning">Matin</option><option value="afternoon">Après-midi</option><option value="evening">Soir</option></select></div>
+          <div class="form-group"><label class="fl">Lien visio</label><input class="fi" id="add-j-link" placeholder="https://zoom.us/j/..." /></div>
+          <div class="form-group"><label class="fl">Plateforme</label><select class="fi" id="add-j-platform"><option value="Zoom">Zoom</option><option value="Meet">Google Meet</option><option value="Teams">Microsoft Teams</option></select></div>
+          <div class="form-group"><label class="fl">Mot de passe</label><input class="fi" id="add-j-pw" placeholder="motdepasse123" /></div>
+          <div class="form-group"><label class="fl">Couleur</label><input class="fi" type="color" id="add-j-color" value="#D4AF37" /></div>
+        </div>
+        <button class="add-btn" id="add-jury-btn">+ Ajouter le jury</button>
+      </div>
+      <div class="table-wrap"><table class="admin-table">
+        <thead><tr><th>Nom</th><th>Créneau</th><th>Plateforme</th><th>Candidats</th><th>Actif</th><th>Actions</th></tr></thead>
+        <tbody id="juries-tbody"><tr><td colspan="6" style="text-align:center;color:var(--fg2);padding:2rem">Chargement...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- CANDIDATES -->
+    <div class="tab-pane" id="pane-candidates">
+      <h2 class="section-title">Gestion des candidats</h2>
+      <div class="quick-actions">
+        <input type="text" class="qa-btn fi" id="cand-search" placeholder="🔍 Rechercher par nom..." style="cursor:text;flex:1;min-width:200px" />
+        <select class="qa-btn fi" id="cand-filter-school"><option value="">Toutes les écoles</option></select>
+        <select class="qa-btn fi" id="cand-filter-slot"><option value="">Tous créneaux</option><option value="morning">Matin</option><option value="afternoon">Après-midi</option><option value="evening">Soir</option></select>
+        <select class="qa-btn fi" id="cand-filter-status"><option value="">Tous statuts</option><option value="pending">En attente</option><option value="assigned">Assigné</option><option value="passed">Passé</option><option value="noshow">No-show</option><option value="cancelled">Annulé</option></select>
+        <button class="qa-btn" id="cand-export-btn">Exporter CSV</button>
+      </div>
+      <div class="table-wrap"><table class="admin-table">
+        <thead><tr><th>Nom</th><th>École</th><th>Créneau</th><th>Jury</th><th>Heure</th><th>Statut</th><th>Phase</th><th>Actions</th></tr></thead>
+        <tbody id="candidates-tbody"><tr><td colspan="8" style="text-align:center;color:var(--fg2);padding:2rem">Chargement...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="tab-pane" id="pane-scores">
+      <h2 class="section-title">Saisie des scores</h2>
+      <p style="color:var(--fg2);font-size:.85rem;margin-bottom:1.25rem">Raccourcis : Entrée = confirmer | Échap = annuler | ↑↓ = ajuster score de 0.5</p>
+      <input type="text" class="search-big" id="score-search" placeholder="🔍 Rechercher un candidat par nom..." autocomplete="off" />
+      <div class="autocomplete" id="score-ac"></div>
+      <div class="candidate-card" id="cand-card">
+        <div class="cc-row">
+          <div><div class="cc-name" id="cc-name"></div><div class="cc-school" id="cc-school"></div></div>
+          <div style="text-align:right"><div id="cc-jury" style="font-size:.82rem;color:var(--fg2)"></div><div id="cc-time" style="font-size:.82rem;color:var(--fg2)"></div></div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.75rem" id="cc-badges"></div>
+      </div>
+      <div class="score-entry" id="score-entry">
+        <!-- 10-question grid -->
+        <div id="questions-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;"></div>
+        <!-- Circles summary -->
+        <div id="score-circles" style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;"></div>
+        <!-- Score display -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div class="score-display">
+            <label>Score base</label>
+            <span id="display-base" style="font-family:'JetBrains Mono',monospace;font-size:2rem;color:var(--gold)">0/20</span>
+          </div>
+          <div class="score-display">
+            <label>Bonus rapidite</label>
+            <span id="display-bonus" style="font-family:'JetBrains Mono',monospace;font-size:2rem;color:var(--success)">+0</span>
+          </div>
+          <div class="score-display">
+            <label>Total</label>
+            <span id="display-total" style="font-family:'JetBrains Mono',monospace;font-size:2.5rem;color:#F0D060">0/25</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="fl">Commentaire global (optionnel)</label>
+          <textarea class="fi" id="score-comment" placeholder="Commentaire global du jury (optionnel)..." style="min-height:60px"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="fl">Phase</label>
+          <div style="display:flex;gap:.5rem;margin-top:.5rem">
+            <button class="action-btn" id="phase-q-btn" style="flex:1;background:rgba(212,175,55,.1);border-color:var(--gold);color:var(--gold)">Qualifications</button>
+            <button class="action-btn" id="phase-f-btn" style="flex:1">Finale</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1.25rem">
+          <label class="fl">Jury</label>
+          <select class="fi" id="score-jury-sel"><option value="">-- Sélectionner un jury --</option></select>
+        </div>
+        <button class="confirm-btn" id="confirm-score">Confirmer le score</button>
+        <button class="cancel-btn" id="cancel-score">Annuler</button>
+        <p class="kb-hint">Entrée pour confirmer | Échap pour annuler</p>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab-pane" id="pane-settings">
+      <h2 class="section-title">Paramètres</h2>
+      <div class="content-section">
+        <div class="cs-title">Compétition</div>
+        <div class="form-row">
+          <div class="form-group"><label class="fl">Nom</label><div class="cs-row"><input class="fi" id="set-name" /><button class="save-btn" onclick="saveSetting('competitionName','set-name')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Date</label><div class="cs-row"><input class="fi" type="date" id="set-date" /><button class="save-btn" onclick="saveSetting('competitionDate','set-date')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Participants max</label><div class="cs-row"><input class="fi" type="number" id="set-maxp" min="1" /><button class="save-btn" onclick="saveSettingNum('maxParticipants','set-maxp')">Sauvegarder</button></div></div>
+          <div class="form-group"><label class="fl">Nb finalistes</label><div class="cs-row"><input class="fi" type="number" id="set-fin" min="1" /><button class="save-btn" onclick="saveSettingNum('finalistsCount','set-fin')">Sauvegarder</button></div></div>
+        </div>
+      </div>
+      <div class="content-section">
+        <div class="cs-title">Inscriptions</div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <label class="toggle"><input type="checkbox" id="set-reg-open" /><span class="toggle-slider"></span></label>
+          <span id="reg-open-lbl" style="font-size:.9rem;color:var(--fg2)">Inscriptions fermées</span>
+        </div>
+      </div>
+      <div class="content-section">
+        <div class="cs-title">Statut de la compétition</div>
+        <select class="fi" id="set-status" style="max-width:300px">
+          <option value="upcoming">À venir</option>
+          <option value="registration">Inscriptions ouvertes</option>
+          <option value="qualif">Qualifications en cours</option>
+          <option value="final">Finale</option>
+          <option value="finished">Terminé</option>
+        </select>
+        <button class="save-btn" style="margin-top:.75rem" onclick="saveSettingVal('competitionStatus',document.getElementById('set-status').value)">Sauvegarder le statut</button>
+      </div>
+      <div class="content-section">
+        <div class="cs-title">Exports</div>
+        <div class="quick-actions">
+          <button class="qa-btn" id="exp-json">Exporter JSON complet</button>
+          <button class="qa-btn" id="exp-regs-csv">Exporter CSV inscriptions</button>
+          <button class="qa-btn" id="exp-scores-csv">Exporter CSV scores</button>
+        </div>
+      </div>
+      <div class="danger-zone">
+        <div class="danger-title">Zone de danger</div>
+        <button class="qa-btn danger" id="reset-scores-btn">Réinitialiser tous les scores</button>
+      </div>
+    </div>
+
+    <!-- SCHOOL REQUESTS -->
+    <div class="tab-pane" id="pane-school-requests">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:1rem">
+        <h2 class="section-title" style="margin-bottom:0">Demandes d'inscription d'ecoles</h2>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <label class="fl" style="margin-bottom:0">Filtre :</label>
+          <select class="fi" id="req-filter" onchange="filterRequests()" style="width:auto">
+            <option value="all">Toutes</option>
+            <option value="pending">En attente</option>
+            <option value="approved">Approuvees</option>
+            <option value="rejected">Refusees</option>
+          </select>
+        </div>
+      </div>
+      <div id="requests-table-container"><div class="skeleton" style="height:200px"></div></div>
+    </div>
+
+    <!-- SPONSORS -->
+    <div class="tab-pane" id="pane-sponsors">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2 class="section-title" style="margin-bottom:0">Gestion des sponsors</h2>
+        <button onclick="toggleAddSponsorForm()" class="btn-gold">+ Ajouter un sponsor</button>
+      </div>
+      <div id="add-sponsor-form" style="display:none;background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.2);border-radius:12px;padding:20px;margin-bottom:20px;">
+        <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--gold)">Nouveau sponsor</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="fl">Nom *</label><input type="text" class="fi" id="sp-name" placeholder="Nom du sponsor"></div>
+          <div class="form-group"><label class="fl">Tier *</label><select class="fi" id="sp-tier"><option value="Gold">Gold</option><option value="Silver">Silver</option><option value="Bronze">Bronze</option></select></div>
+          <div class="form-group"><label class="fl">URL Logo</label><input type="url" class="fi" id="sp-logo" placeholder="https://..."></div>
+          <div class="form-group"><label class="fl">URL Site Web</label><input type="url" class="fi" id="sp-website" placeholder="https://..."></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+          <button onclick="toggleAddSponsorForm()" class="btn-outline" style="padding:.5rem 1rem">Annuler</button>
+          <button onclick="addSponsor()" class="btn-gold">Ajouter</button>
+        </div>
+      </div>
+      <div id="sponsors-table-container"><div class="skeleton" style="height:200px"></div></div>
+    </div>
+
+  </div><!-- admin-body -->
+</div><!-- admin -->
+
+<div class="toast" id="toast"></div>
+<div id="offline-banner">⚠️ Connexion perdue — Les données peuvent ne pas être à jour</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, push, onValue, update, get, remove, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  const firebaseConfig={apiKey:"AIzaSyAH1e0LBV8aFX_d7Cahmh7M8KyVbOkMHHw",authDomain:"cmf-brain-teaser-ac440.firebaseapp.com",databaseURL:"https://cmf-brain-teaser-ac440-default-rtdb.europe-west1.firebasedatabase.app",projectId:"cmf-brain-teaser-ac440",storageBucket:"cmf-brain-teaser-ac440.firebasestorage.app",messagingSenderId:"907251407052",appId:"1:907251407052:web:3801d3f8128f070b1e4a69"};
+  const app=initializeApp(firebaseConfig);const db=getDatabase(app);
+  function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML}
+  const unsubs=[];
+  window.addEventListener('beforeunload',()=>unsubs.forEach(u=>u()));
+  window.addEventListener('pagehide',()=>unsubs.forEach(u=>u()));
+
+  // AUTH
+  const PASS='CMF2026admin';
+  const SESSION_KEY='cmf_admin';
+  const SESSION_MAX=4*3600*1000;
+
+  function checkAuth(){
+    try{const s=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');if(s&&s.auth&&(Date.now()-s.time)<SESSION_MAX)return true}catch(e){}
+    return false;
+  }
+  function login(){sessionStorage.setItem(SESSION_KEY,JSON.stringify({auth:true,time:Date.now()}))}
+  function logout(){sessionStorage.removeItem(SESSION_KEY);document.getElementById('gate').style.display='flex';document.getElementById('admin').style.display='none'}
+
+  if(checkAuth()){document.getElementById('gate').style.display='none';document.getElementById('admin').style.display='flex';initAdmin()}
+
+  document.getElementById('gate-submit').addEventListener('click',()=>{
+    const pw=document.getElementById('gate-pw').value;
+    if(pw===PASS){login();document.getElementById('gate').style.display='none';document.getElementById('admin').style.display='flex';initAdmin()}
+    else{const inp=document.getElementById('gate-pw');document.getElementById('gate-err').textContent='Mot de passe incorrect. Veuillez réessayer.';inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),500);inp.value=''}
+  });
+  document.getElementById('gate-pw').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('gate-submit').click()});
+  document.getElementById('logout-btn').addEventListener('click',logout);
+
+  setInterval(()=>{if(!checkAuth()&&document.getElementById('admin').style.display!=='none')logout()},60000);
+
+  // TOAST
+  function showToast(msg,isErr=false){
+    const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(isErr?' error':'');
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+  }
+
+  // LANG
+  let lang=localStorage.getItem('lang')||'fr';
+  const T={fr:{},en:{}};
+  function applyT(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[lang][k]!==undefined)el.textContent=T[lang][k]});document.getElementById('lang-btn').textContent=lang==='fr'?'EN':'FR'}
+  document.getElementById('lang-btn').addEventListener('click',()=>{lang=lang==='fr'?'en':'fr';localStorage.setItem('lang',lang);applyT()});
+  applyT();
+
+  // TABS
+  document.querySelectorAll('.atab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('pane-'+btn.dataset.pane).classList.add('active');
+      if(btn.dataset.pane==='content')loadContentFields();
+      if(btn.dataset.pane==='school-requests'){filterRequests();}
+      if(btn.dataset.pane==='sponsors'){renderSponsorsTable();}
+    });
+  });
+
+  function loadContentFields(){
+    get(ref(db,'/settings/content')).then(s=>{
+      if(!s.exists())return;const c=s.val();
+      ['heroTitle_fr','heroTitle_en','heroSubtitle_fr','heroSubtitle_en','aboutText_fr','aboutText_en','footerContact','instagramUrl','linkedinUrl'].forEach(k=>{
+        const el=document.getElementById('c-'+k);if(el&&c[k]!==undefined)el.value=c[k];
+      });
+    }).catch(()=>{});
+  }
+
+  // OFFLINE
+  window.addEventListener('online',()=>document.getElementById('offline-banner').style.display='none');
+  window.addEventListener('offline',()=>document.getElementById('offline-banner').style.display='block');
+  if(!navigator.onLine)document.getElementById('offline-banner').style.display='block';
+
+  // GLOBAL DATA
+  let allRegs={},allScores={},allSchools={},allJuries={},maxP=150,compStatus='upcoming',regOpen=false;
+
+  function initAdmin(){
+    // Dashboard stats
+    unsubs.push(onValue(ref(db,'/registrations'),s=>{
+      allRegs=s.exists()?s.val():{};
+      const cnt=Object.keys(allRegs).length;
+      document.getElementById('d-regs').textContent=cnt;
+      document.getElementById('d-spots').textContent=Math.max(0,maxP-cnt);
+      renderFeed();renderCandidatesTable();
+    }));
+    unsubs.push(onValue(ref(db,'/scores'),s=>{
+      allScores=s.exists()?s.val():{};
+      const cnt=Object.keys(allScores).length;
+      document.getElementById('d-scores').textContent=cnt;
+      const today=new Date();today.setHours(0,0,0,0);
+      const todayCnt=Object.values(allScores).filter(sc=>sc.timestamp&&sc.timestamp>=today.getTime()).length;
+      document.getElementById('d-today').textContent=todayCnt;
+      renderFeed();
+    }));
+    unsubs.push(onValue(ref(db,'/schools'),s=>{
+      allSchools=s.exists()?s.val():{};
+      document.getElementById('d-juries') // placeholder, use juries for count
+      renderSchoolsTable();populateSchoolFilters();
+    }));
+    unsubs.push(onValue(ref(db,'/juries'),s=>{
+      allJuries=s.exists()?s.val():{};
+      const cnt=Object.values(allJuries).filter(j=>j.active).length;
+      document.getElementById('d-juries').textContent=cnt;
+      renderJuriesTable();populateJurySelects();
+    }));
+    unsubs.push(onValue(ref(db,'/settings/maxParticipants'),s=>{maxP=s.exists()?s.val()||150:150}));
+    unsubs.push(onValue(ref(db,'/settings/competitionStatus'),s=>{
+      compStatus=s.exists()?s.val():'upcoming';
+      document.getElementById('d-status').textContent=compStatus;
+      document.getElementById('set-status').value=compStatus;
+    }));
+    unsubs.push(onValue(ref(db,'/settings/registrationOpen'),s=>{
+      regOpen=s.exists()?!!s.val():false;
+      document.getElementById('set-reg-open').checked=regOpen;
+      document.getElementById('reg-open-lbl').textContent=regOpen?'Inscriptions ouvertes':'Inscriptions fermées';
+    }));
+
+    // Load settings
+    get(ref(db,'/settings')).then(s=>{
+      if(!s.exists())return;const d=s.val();
+      if(d.competitionName)document.getElementById('set-name').value=d.competitionName;
+      if(d.competitionDate)document.getElementById('set-date').value=d.competitionDate;
+      if(d.maxParticipants)document.getElementById('set-maxp').value=d.maxParticipants;
+      if(d.finalistsCount)document.getElementById('set-fin').value=d.finalistsCount;
+      if(d.content){const c=d.content;
+        ['heroTitle_fr','heroTitle_en','heroSubtitle_fr','heroSubtitle_en','aboutText_fr','aboutText_en','footerContact','instagramUrl','linkedinUrl'].forEach(k=>{
+          const el=document.getElementById('c-'+k);if(el&&c[k]!==undefined)el.value=c[k];
+        });
+      }
+    });
+
+    // QUICK ACTIONS
+    document.getElementById('qa-toggle-reg').addEventListener('click',async()=>{
+      await set(ref(db,'/settings/registrationOpen'),!regOpen);
+      showToast((!regOpen?'Inscriptions ouvertes':'Inscriptions fermées'));
+    });
+    document.getElementById('qa-status').addEventListener('change',async(e)=>{
+      if(!e.target.value)return;
+      await set(ref(db,'/settings/competitionStatus'),e.target.value);
+      showToast('Statut mis à jour : '+e.target.value);e.target.value='';
+    });
+    document.getElementById('qa-export').addEventListener('click',()=>exportRegsCSV());
+
+    // ADD SCHOOL
+    document.getElementById('add-school-btn').addEventListener('click',async()=>{
+      const name=document.getElementById('add-s-name').value.trim();
+      if(!name){showToast('Le nom est requis.',true);return}
+      await push(ref(db,'/schools'),{name,city:document.getElementById('add-s-city').value.trim()||null,type:document.getElementById('add-s-type').value,active:true});
+      document.getElementById('add-s-name').value='';document.getElementById('add-s-city').value='';
+      showToast('École ajoutée !');
+    });
+
+    // ADD JURY
+    document.getElementById('add-jury-btn').addEventListener('click',async()=>{
+      const fn=document.getElementById('add-j-fn').value.trim();
+      const ln=document.getElementById('add-j-ln').value.trim();
+      if(!fn||!ln){showToast('Prénom et nom requis.',true);return}
+      await push(ref(db,'/juries'),{firstName:fn,lastName:ln,timeSlot:document.getElementById('add-j-slot').value,videoLink:document.getElementById('add-j-link').value.trim()||null,platform:document.getElementById('add-j-platform').value,password:document.getElementById('add-j-pw').value||null,color:document.getElementById('add-j-color').value,active:true});
+      document.getElementById('add-j-fn').value='';document.getElementById('add-j-ln').value='';document.getElementById('add-j-link').value='';document.getElementById('add-j-pw').value='';
+      showToast('Jury ajouté !');
+    });
+
+    // CANDIDATES FILTERS
+    ['cand-search','cand-filter-school','cand-filter-slot','cand-filter-status'].forEach(id=>{
+      document.getElementById(id).addEventListener('input',renderCandidatesTable);
+      document.getElementById(id).addEventListener('change',renderCandidatesTable);
+    });
+    document.getElementById('cand-export-btn').addEventListener('click',exportRegsCSV);
+
+    // SETTINGS SAVE
+    document.getElementById('set-reg-open').addEventListener('change',async(e)=>{
+      await set(ref(db,'/settings/registrationOpen'),e.target.checked);
+      showToast(e.target.checked?'Inscriptions ouvertes':'Inscriptions fermées');
+    });
+
+    // EXPORTS
+    document.getElementById('exp-json').addEventListener('click',()=>exportJSON());
+    document.getElementById('exp-regs-csv').addEventListener('click',()=>exportRegsCSV());
+    document.getElementById('exp-scores-csv').addEventListener('click',()=>exportScoresCSV());
+    document.getElementById('reset-scores-btn').addEventListener('click',async()=>{
+      if(confirm('Réinitialiser TOUS les scores ? Cette action est irréversible.')){
+        if(confirm('Dernière confirmation — supprimer tous les scores ?')){
+          await remove(ref(db,'/scores'));showToast('Scores réinitialisés.');
+        }
+      }
+    });
+
+    initScoreEntry();
+    loadSchoolRequests();
+    loadSponsors();
+  }
+
+  // CONTENT SAVE
+  window.saveContent=async(key,elId)=>{
+    const val=document.getElementById(elId).value;
+    await set(ref(db,'/settings/content/'+key),val);showToast('Sauvegardé : '+key);
+  };
+  window.saveSetting=async(key,elId)=>{
+    const val=document.getElementById(elId).value;
+    await set(ref(db,'/settings/'+key),val);showToast('Sauvegardé.');
+  };
+  window.saveSettingNum=async(key,elId)=>{
+    const val=parseInt(document.getElementById(elId).value)||0;
+    await set(ref(db,'/settings/'+key),val);showToast('Sauvegardé.');
+  };
+  window.saveSettingVal=async(key,val)=>{await set(ref(db,'/settings/'+key),val);showToast('Sauvegardé.')};
+
+  // FEED
+  function renderFeed(){
+    const items=[];
+    Object.entries(allRegs).sort((a,b)=>(b[1].registeredAt||0)-(a[1].registeredAt||0)).slice(0,5).forEach(([,r])=>{
+      const dt=r.registeredAt?new Date(r.registeredAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+      items.push({dot:'reg',text:`🆕 ${r.firstName||''} ${r.lastName||''} s'est inscrit(e)`,time:dt});
+    });
+    Object.entries(allScores).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,5).forEach(([,s])=>{
+      const dt=s.timestamp?new Date(s.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+      items.push({dot:'score',text:`✅ Score saisi : ${s.firstName||''} ${s.lastName||''} — ${s.totalScore}/25`,time:dt});
+    });
+    items.sort((a,b)=>b.time.localeCompare(a.time));
+    const fl=document.getElementById('feed-list');
+    if(!items.length){fl.innerHTML='<div style="color:var(--fg2);font-size:.85rem">Aucune activité récente</div>';return}
+    fl.innerHTML=items.slice(0,10).map(i=>`<div class="feed-item"><div class="feed-dot ${i.dot}"></div><div class="feed-text">${esc(i.text)}</div><div class="feed-time">${esc(i.time)}</div></div>`).join('');
+  }
+
+  // SCHOOLS TABLE
+  function renderSchoolsTable(){
+    const tbody=document.getElementById('schools-tbody');
+    const schools=Object.entries(allSchools);
+    if(!schools.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--fg2);padding:2rem">Aucune école</td></tr>';return}
+    const tMap={engineering:'Ingénieur',business:'Business',university:'Université'};
+    tbody.innerHTML=schools.map(([id,s])=>{
+      const candCnt=Object.values(allRegs).filter(r=>r.school===s.name).length;
+      return `<tr>
+        <td><strong>${esc(s.name)}</strong></td>
+        <td>${esc(s.city||'—')}</td>
+        <td>${tMap[s.type]||s.type||'—'}</td>
+        <td>${candCnt}</td>
+        <td><span class="badge ${s.active?'b-active':'b-inactive'}">${s.active?'Actif':'Inactif'}</span></td>
+        <td><button class="action-btn" onclick="toggleSchool('${id}',${!s.active})">${s.active?'Désactiver':'Activer'}</button>
+            <button class="action-btn del" onclick="deleteItem('/schools/${id}','école')">Supprimer</button></td>
+      </tr>`;
+    }).join('');
+  }
+  window.toggleSchool=async(id,val)=>{await update(ref(db,'/schools/'+id),{active:val});showToast('École mise à jour.')};
+
+  // JURIES TABLE
+  function renderJuriesTable(){
+    const tbody=document.getElementById('juries-tbody');
+    const juries=Object.entries(allJuries);
+    if(!juries.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--fg2);padding:2rem">Aucun jury</td></tr>';return}
+    const slotMap={morning:'Matin',afternoon:'Après-midi',evening:'Soir'};
+    tbody.innerHTML=juries.map(([id,j])=>{
+      const candCnt=Object.values(allRegs).filter(r=>r.assignedJuryId===id).length;
+      return `<tr>
+        <td><strong>${esc(j.firstName||'')} ${esc(j.lastName||'')}</strong></td>
+        <td>${slotMap[j.timeSlot]||j.timeSlot||'—'}</td>
+        <td>${esc(j.platform||'—')}</td>
+        <td>${candCnt}</td>
+        <td><span class="badge ${j.active?'b-active':'b-inactive'}">${j.active?'Actif':'Inactif'}</span></td>
+        <td>
+          ${j.videoLink?`<button class="action-btn" onclick="navigator.clipboard.writeText(this.dataset.link);showToast('Lien copié !')" data-link="${esc(j.videoLink)}">Copier lien</button>`:''}
+          <button class="action-btn" onclick="toggleJury('${id}',${!j.active})">${j.active?'Désactiver':'Activer'}</button>
+          <button class="action-btn del" onclick="deleteItem('/juries/${id}','jury')">Supprimer</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  window.toggleJury=async(id,val)=>{await update(ref(db,'/juries/'+id),{active:val});showToast('Jury mis à jour.')};
+  window.showToast=showToast;
+
+  // CANDIDATES TABLE
+  function populateSchoolFilters(){
+    const schools=[...new Set(Object.values(allRegs).map(r=>r.school).filter(Boolean))].sort();
+    const sel=document.getElementById('cand-filter-school');
+    const cur=sel.value;sel.innerHTML='<option value="">Toutes les écoles</option>';
+    schools.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+    sel.value=cur;
+  }
+
+  function renderCandidatesTable(){
+    const search=document.getElementById('cand-search').value.toLowerCase();
+    const school=document.getElementById('cand-filter-school').value;
+    const slot=document.getElementById('cand-filter-slot').value;
+    const status=document.getElementById('cand-filter-status').value;
+    const tbody=document.getElementById('candidates-tbody');
+    const slotMap={morning:'Matin',afternoon:'Après-midi',evening:'Soir'};
+    let rows=Object.entries(allRegs).filter(([,r])=>{
+      const name=((r.firstName||'')+' '+(r.lastName||'')).toLowerCase();
+      return(!search||name.includes(search))&&(!school||r.school===school)&&(!slot||r.timeSlot===slot)&&(!status||r.status===status);
+    });
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--fg2);padding:2rem">Aucun candidat trouvé</td></tr>';return}
+    const jMap={};Object.entries(allJuries).forEach(([id,j])=>jMap[id]=j.firstName+' '+j.lastName);
+    tbody.innerHTML=rows.map(([id,r])=>{
+      const statusClass={pending:'b-pending',assigned:'b-assigned',passed:'b-passed',noshow:'b-noshow',cancelled:'b-cancelled'};
+      return `<tr>
+        <td><strong>${esc((r.firstName||'')+' '+(r.lastName||''))}</strong><br><span style="font-size:.75rem;color:var(--fg2)">${esc(r.email||'')}</span></td>
+        <td>${esc(r.school||'—')}</td>
+        <td>${slotMap[r.timeSlot]||r.timeSlot||'—'}</td>
+        <td>
+          <select style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:.25rem .5rem;color:var(--fg);font-size:.78rem;font-family:Inter,sans-serif" onchange="assignJury('${id}',this.value)">
+            <option value="">-- Jury --</option>
+            ${Object.entries(allJuries).map(([jid,j])=>`<option value="${jid}" ${r.assignedJuryId===jid?'selected':''}>${esc(j.firstName+' '+j.lastName)}</option>`).join('')}
+          </select>
+        </td>
+        <td><input type="time" value="${esc(r.assignedTime||'')}" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:.2rem .4rem;color:var(--fg);font-size:.78rem;font-family:JetBrains Mono,monospace" onchange="assignTime('${id}',this.value)" /></td>
+        <td>
+          <select style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:.25rem .5rem;color:var(--fg);font-size:.78rem;font-family:Inter,sans-serif" onchange="setStatus('${id}',this.value)">
+            ${['pending','assigned','passed','noshow','cancelled'].map(st=>`<option value="${st}" ${(r.status||'pending')===st?'selected':''}>${st}</option>`).join('')}
+          </select>
+        </td>
+        <td><select style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:.25rem .5rem;color:var(--fg);font-size:.78rem;font-family:Inter,sans-serif" onchange="setPhase('${id}',this.value)">
+          <option value="qualif" ${(r.phase||'qualif')==='qualif'?'selected':''}>Qualif</option>
+          <option value="final" ${r.phase==='final'?'selected':''}>Finale</option>
+        </select></td>
+        <td>
+          ${r.cvData?`<button class="action-btn" onclick="viewCandidateCV('${id}')">CV</button>`:''}
+          <button class="action-btn del" onclick="deleteItem('/registrations/${id}','candidat')">Supprimer</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  window.assignJury=async(id,jid)=>{await update(ref(db,'/registrations/'+id),{assignedJuryId:jid||null,status:'assigned'});showToast('Jury assigné.')};
+  window.assignTime=async(id,time)=>{await update(ref(db,'/registrations/'+id),{assignedTime:time});showToast('Heure mise à jour.')};
+  window.setStatus=async(id,st)=>{await update(ref(db,'/registrations/'+id),{status:st});showToast('Statut mis à jour.')};
+  window.setPhase=async(id,ph)=>{await update(ref(db,'/registrations/'+id),{phase:ph});showToast('Phase mise à jour.')};
+
+  // DELETE
+  window.deleteItem=async(path,label)=>{
+    if(confirm('Supprimer ce '+label+' ?')){await remove(ref(db,path));showToast(label+' supprimé.');}
+  };
+
+  // JURY SELECTS FOR SCORE ENTRY
+  function populateJurySelects(){
+    const sel=document.getElementById('score-jury-sel');
+    const cur=sel.value;sel.innerHTML='<option value="">-- Sélectionner un jury --</option>';
+    Object.entries(allJuries).filter(([,j])=>j.active).forEach(([id,j])=>{
+      const o=document.createElement('option');o.value=id;o.textContent=j.firstName+' '+j.lastName;sel.appendChild(o);
+    });
+    sel.value=cur;
+  }
+
+  // SCORE ENTRY — 10-QUESTION SYSTEM
+  let selectedCand=null;let scorePhase='qualif';
+  let questions=Array(10).fill(null).map(()=>({correct:false,time:60}));
+
+  function calcBonus(qs){
+    const correct=qs.filter(q=>q.correct);
+    if(correct.length===0)return 0;
+    const avgTime=correct.reduce((s,q)=>s+q.time,0)/correct.length;
+    if(avgTime<=30)return 5;
+    if(avgTime>=90)return 0;
+    return Math.round((90-avgTime)/12);
+  }
+
+  function renderQuestions(){
+    const grid=document.getElementById('questions-grid');
+    if(!grid)return;
+    grid.innerHTML=questions.map((q,i)=>`
+      <div class="q-card ${q.correct?'correct':'incorrect'}" data-idx="${i}">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--fg)">Q${i+1}</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button onclick="toggleQ(${i},true)" class="q-btn ${q.correct?'active-green':''}">Correct</button>
+          <button onclick="toggleQ(${i},false)" class="q-btn ${!q.correct?'active-red':''}">Incorrect</button>
+        </div>
+        <label style="font-size:.8rem;color:var(--fg2);">Temps: <span id="time-val-${i}">${q.time}s</span></label>
+        <input type="range" min="0" max="120" value="${q.time}" oninput="updateTime(${i},this.value)" style="width:100%;margin-top:4px;accent-color:var(--gold)">
+      </div>
+    `).join('');
+    updateScores();
+    updateCircles();
+  }
+
+  window.toggleQ=(idx,correct)=>{questions[idx].correct=correct;renderQuestions()};
+  window.updateTime=(idx,val)=>{
+    questions[idx].time=parseInt(val);
+    const el=document.getElementById('time-val-'+idx);
+    if(el)el.textContent=val+'s';
+    updateScores();
+  };
+
+  function updateScores(){
+    const correct=questions.filter(q=>q.correct).length;
+    const base=correct*2;
+    const bonus=calcBonus(questions);
+    const total=base+bonus;
+    const db_el=document.getElementById('display-base');
+    const dbon=document.getElementById('display-bonus');
+    const dtot=document.getElementById('display-total');
+    if(db_el)db_el.textContent=base+'/20';
+    if(dbon)dbon.textContent='+'+bonus;
+    if(dtot)dtot.textContent=total+'/25';
+    updateCircles();
+  }
+
+  function updateCircles(){
+    const c=document.getElementById('score-circles');
+    if(!c)return;
+    c.innerHTML=questions.map((q,i)=>`<div style="width:28px;height:28px;border-radius:50%;background:${q.correct?'#00D4AA':'#FF4444'};display:flex;align-items:center;justify-content:center;font-size:.7rem;color:white;font-weight:700">${i+1}</div>`).join('');
+  }
+
+  function initScoreEntry(){
+    document.getElementById('phase-q-btn').addEventListener('click',()=>{
+      scorePhase='qualif';
+      document.getElementById('phase-q-btn').style.cssText='flex:1;background:rgba(212,175,55,.1);border-color:var(--gold);color:var(--gold)';
+      document.getElementById('phase-f-btn').style.cssText='flex:1';
+    });
+    document.getElementById('phase-f-btn').addEventListener('click',()=>{
+      scorePhase='final';
+      document.getElementById('phase-f-btn').style.cssText='flex:1;background:rgba(0,212,170,.1);border-color:var(--success);color:var(--success)';
+      document.getElementById('phase-q-btn').style.cssText='flex:1';
+    });
+
+    // AUTOCOMPLETE
+    const searchEl=document.getElementById('score-search');
+    const ac=document.getElementById('score-ac');
+    searchEl.addEventListener('input',()=>{
+      const q=searchEl.value.toLowerCase().trim();
+      if(!q){ac.style.display='none';return}
+      const matches=Object.entries(allRegs).filter(([,r])=>{
+        return ((r.firstName||'')+' '+(r.lastName||'')).toLowerCase().includes(q);
+      }).slice(0,8);
+      if(!matches.length){ac.style.display='none';return}
+      const slotMap={morning:'Matin',afternoon:'Apres-midi',evening:'Soir'};
+      ac.innerHTML=matches.map(([id,r])=>{
+        const jName=r.assignedJuryId&&allJuries[r.assignedJuryId]?allJuries[r.assignedJuryId].firstName+' '+allJuries[r.assignedJuryId].lastName:'—';
+        return `<div class="ac-item" data-id="${id}">${esc((r.firstName||'')+' '+(r.lastName||''))} — ${esc(r.school||'?')} — ${slotMap[r.timeSlot]||r.timeSlot||'?'} — Jury: ${esc(jName)}</div>`;
+      }).join('');
+      ac.style.display='block';
+      ac.querySelectorAll('.ac-item').forEach(item=>{
+        item.addEventListener('click',()=>{
+          const id=item.dataset.id;const r=allRegs[id];
+          selectedCand={id,...r};searchEl.value=(r.firstName||'')+' '+(r.lastName||'');
+          ac.style.display='none';showCandCard(r);
+          questions=Array(10).fill(null).map(()=>({correct:false,time:60}));
+          renderQuestions();
+          document.getElementById('score-entry').style.display='block';
+          if(r.assignedJuryId)document.getElementById('score-jury-sel').value=r.assignedJuryId;
+        });
+      });
+    });
+    document.addEventListener('click',e=>{if(!e.target.closest('#score-ac')&&!e.target.closest('#score-search'))ac.style.display='none'});
+
+    // CONFIRM
+    document.getElementById('confirm-score').addEventListener('click',async()=>{
+      if(!selectedCand){showToast('Sélectionnez un candidat.',true);return}
+      const correctCount=questions.filter(q=>q.correct).length;
+      const scoreBase=correctCount*2;
+      const speedBonus=calcBonus(questions);
+      const totalScore=scoreBase+speedBonus;
+      const jid=document.getElementById('score-jury-sel').value;
+      const comment=document.getElementById('score-comment').value.trim();
+      await push(ref(db,'/scores'),{candidateId:selectedCand.id,firstName:selectedCand.firstName,lastName:selectedCand.lastName,school:selectedCand.school||null,scoreBase,speedBonus,totalScore,questionDetails:questions,juryComment:comment||null,juryId:jid||null,phase:scorePhase,timestamp:Date.now()});
+      await update(ref(db,'/registrations/'+selectedCand.id),{status:'passed'});
+      showToast('Score enregistré !');
+      clearScoreEntry();
+    });
+    document.getElementById('cancel-score').addEventListener('click',clearScoreEntry);
+
+    // KEYBOARD
+    document.getElementById('pane-scores').addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&selectedCand)document.getElementById('confirm-score').click();
+      if(e.key==='Escape')clearScoreEntry();
+    });
+  }
+
+  function showCandCard(r){
+    const slotMap={morning:'Matin',afternoon:'Après-midi',evening:'Soir'};
+    document.getElementById('cc-name').textContent=(r.firstName||'')+' '+(r.lastName||'');
+    document.getElementById('cc-school').textContent=r.school||'';
+    const j=r.assignedJuryId&&allJuries[r.assignedJuryId];
+    document.getElementById('cc-jury').textContent=j?'Jury : '+j.firstName+' '+j.lastName:'Jury non assigné';
+    document.getElementById('cc-time').textContent=r.assignedTime?'Heure : '+r.assignedTime:'Heure non définie';
+    document.getElementById('cc-badges').innerHTML=`<span class="badge b-${esc(r.status||'pending')}">${esc(r.status||'pending')}</span><span class="badge" style="background:rgba(212,175,55,.1);color:var(--gold);border:1px solid var(--border)">${esc(r.phase||'qualif')}</span>`;
+    document.getElementById('cand-card').style.display='block';
+  }
+
+  function clearScoreEntry(){
+    selectedCand=null;
+    questions=Array(10).fill(null).map(()=>({correct:false,time:60}));
+    document.getElementById('cand-card').style.display='none';
+    document.getElementById('score-entry').style.display='none';
+    document.getElementById('score-search').value='';
+    document.getElementById('score-comment').value='';
+    document.getElementById('score-search').focus();
+  }
+
+  // CV VIEWER
+  window.viewCandidateCV=(id)=>{
+    const cv=(allRegs[id])?.cvData;
+    if(!cv)return;
+    const w=window.open();
+    w.document.write(`<iframe src="${cv}" style="width:100%;height:100vh;border:none"></iframe>`);
+  };
+
+  // SCHOOL REQUESTS
+  let allRequests={};
+  function loadSchoolRequests(){
+    onValue(ref(db,'/school_requests'),snap=>{
+      allRequests=snap.val()||{};
+      updateRequestsBadge();
+      filterRequests();
+    });
+  }
+
+  function updateRequestsBadge(){
+    const pending=Object.values(allRequests).filter(r=>r.status==='pending').length;
+    const badge=document.getElementById('requests-badge');
+    if(pending>0){badge.textContent=pending;badge.style.display='inline-flex'}
+    else{badge.style.display='none'}
+  }
+
+  window.filterRequests=()=>{
+    const filter=document.getElementById('req-filter').value;
+    const filtered=Object.entries(allRequests)
+      .filter(([,r])=>filter==='all'||r.status===filter)
+      .sort(([,a],[,b])=>(b.submittedAt||0)-(a.submittedAt||0));
+    const container=document.getElementById('requests-table-container');
+    if(!container)return;
+    if(filtered.length===0){container.innerHTML='<div class="empty-state">Aucune demande</div>';return}
+    const tMap={engineering:'Ingenieur',business:'Business',university:'Universite'};
+    container.innerHTML=`<div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Ecole</th><th>Ville</th><th>Type</th><th>Representant</th><th>Etudiants</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>${filtered.map(([id,r])=>`
+        <tr>
+          <td><strong>${esc(r.schoolName||'')}</strong></td>
+          <td>${esc(r.city||'')}</td>
+          <td>${tMap[r.type]||esc(r.type||'—')}</td>
+          <td>${esc(r.repName||'')}<br><small style="color:var(--fg2)">${esc(r.repEmail||'')}</small></td>
+          <td>${esc(r.studentCount||'—')}</td>
+          <td>${r.submittedAt?new Date(r.submittedAt).toLocaleDateString('fr-FR'):'—'}</td>
+          <td><span class="badge-${r.status}">${r.status==='pending'?'En attente':r.status==='approved'?'Approuvee':'Refusee'}</span></td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            ${r.status==='pending'?`
+              <button onclick="approveRequest('${id}')" class="btn-success btn-sm">Approuver</button>
+              <button onclick="rejectRequest('${id}')" class="btn-error btn-sm">Refuser</button>
+            `:'<span style="color:var(--fg2);font-size:.75rem">Traite</span>'}
+            ${r.docData?`<button onclick="viewDoc('${id}')" class="btn-outline btn-sm">Doc</button>`:''}
+          </td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  };
+
+  window.approveRequest=async(id)=>{
+    const req=allRequests[id];if(!req)return;
+    const schoolRef=push(ref(db,'/schools'));
+    await set(schoolRef,{name:req.schoolName,city:req.city||null,type:req.type||null,active:true,addedAt:Date.now()});
+    await update(ref(db,'/school_requests/'+id),{status:'approved'});
+    showToast('Ecole "'+req.schoolName+'" approuvee !');
+  };
+
+  window.rejectRequest=async(id)=>{
+    if(!confirm('Refuser cette demande ?'))return;
+    await update(ref(db,'/school_requests/'+id),{status:'rejected'});
+    showToast('Demande refusee.');
+  };
+
+  window.viewDoc=(id)=>{
+    const doc=allRequests[id]?.docData;if(!doc)return;
+    const w=window.open();
+    w.document.write(`<iframe src="${doc}" style="width:100%;height:100vh;border:none"></iframe>`);
+  };
+
+  // SPONSORS
+  let allSponsors={};
+  function loadSponsors(){
+    onValue(ref(db,'/sponsors'),snap=>{
+      allSponsors=snap.val()||{};
+      renderSponsorsTable();
+    });
+  }
+
+  function renderSponsorsTable(){
+    const entries=Object.entries(allSponsors).sort(([,a],[,b])=>{
+      const order={Gold:0,Silver:1,Bronze:2};
+      return (order[a.tier]||3)-(order[b.tier]||3);
+    });
+    const container=document.getElementById('sponsors-table-container');
+    if(!container)return;
+    if(entries.length===0){container.innerHTML='<div class="empty-state">Aucun sponsor pour l\'instant</div>';return}
+    container.innerHTML=`<div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Nom</th><th>Tier</th><th>Logo</th><th>Site</th><th>Actif</th><th>Actions</th></tr></thead>
+      <tbody>${entries.map(([id,s])=>`
+        <tr>
+          <td><strong>${esc(s.name||'')}</strong></td>
+          <td><span class="tier-badge tier-${(s.tier||'').toLowerCase()}">${esc(s.tier||'')}</span></td>
+          <td>${s.logoUrl?`<img src="${esc(s.logoUrl)}" style="height:30px;max-width:80px;object-fit:contain" onerror="this.style.opacity=.3">`:'-'}</td>
+          <td>${s.websiteUrl?`<a href="${esc(s.websiteUrl)}" target="_blank" style="color:var(--gold)">${esc(s.websiteUrl.replace('https://',''))}</a>`:'-'}</td>
+          <td><label class="toggle-switch"><input type="checkbox" ${s.active?'checked':''} onchange="toggleSponsor('${id}',this.checked)"><span class="slider"></span></label></td>
+          <td><button onclick="deleteSponsor('${id}')" class="btn-error btn-sm">Supprimer</button></td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+
+  window.toggleAddSponsorForm=()=>{
+    const f=document.getElementById('add-sponsor-form');
+    f.style.display=f.style.display==='none'?'block':'none';
+  };
+
+  window.addSponsor=async()=>{
+    const name=document.getElementById('sp-name').value.trim();
+    if(!name){showToast('Nom requis',true);return}
+    await push(ref(db,'/sponsors'),{name,tier:document.getElementById('sp-tier').value,logoUrl:document.getElementById('sp-logo').value||null,websiteUrl:document.getElementById('sp-website').value||null,active:true});
+    document.getElementById('add-sponsor-form').style.display='none';
+    ['sp-name','sp-logo','sp-website'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+    showToast('Sponsor ajoute !');
+  };
+
+  window.toggleSponsor=async(id,active)=>{await update(ref(db,'/sponsors/'+id),{active})};
+  window.deleteSponsor=async(id)=>{
+    if(!confirm('Supprimer ce sponsor ?'))return;
+    await remove(ref(db,'/sponsors/'+id));showToast('Sponsor supprime.');
+  };
+
+  // EXPORTS
+  function downloadCSV(content,filename){
+    const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+  }
+  function exportRegsCSV(){
+    const headers=['Prénom','Nom','Email','École','Filière','Année','Créneau','Plateforme','Jury','Heure','Statut','Phase','Inscrit le'];
+    const slotMap={morning:'Matin',afternoon:'Après-midi',evening:'Soir'};
+    const rows=Object.entries(allRegs).map(([id,r])=>{
+      const j=r.assignedJuryId&&allJuries[r.assignedJuryId];
+      return [r.firstName||'',r.lastName||'',r.email||'',r.school||'',r.filiere||'',r.year||'',slotMap[r.timeSlot]||r.timeSlot||'',r.platform||'',j?j.firstName+' '+j.lastName:'',r.assignedTime||'',r.status||'',r.phase||'',r.registeredAt?new Date(r.registeredAt).toLocaleString('fr-FR'):''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',');
+    });
+    downloadCSV([headers.join(','),...rows].join('\n'),'inscriptions_cmf_'+new Date().toISOString().slice(0,10)+'.csv');
+  }
+  function exportScoresCSV(){
+    const headers=['Prénom','Nom','École','Score Base','Bonus','Total','Phase','Jury','Commentaire','Timestamp'];
+    const rows=Object.values(allScores).map(s=>[s.firstName||'',s.lastName||'',s.school||'',s.scoreBase??'',s.speedBonus??'',s.totalScore??'',s.phase||'',s.juryId||'',s.juryComment||'',s.timestamp?new Date(s.timestamp).toLocaleString('fr-FR'):''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+    downloadCSV([headers.join(','),...rows].join('\n'),'scores_cmf_'+new Date().toISOString().slice(0,10)+'.csv');
+  }
+  async function exportJSON(){
+    const snap=await get(ref(db,'/'));
+    const blob=new Blob([JSON.stringify(snap.val(),null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cmf_database_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

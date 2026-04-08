@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classement – CMF Brain Teaser Challenge</title>
+  <meta name="description" content="Classement en temps réel du CMF Brain Teaser Challenge." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0A1628;--bg2:#0F2040;--gold:#D4AF37;--gold-l:#F0D060;--fg:#FFFFFF;--fg2:#A0B0C0;--success:#00D4AA;--card:rgba(255,255,255,0.05);--border:rgba(212,175,55,0.2)}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow-x:hidden}
+    #scroll-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-l));width:0;z-index:9999}
+    nav{position:fixed;top:3px;left:0;right:0;z-index:1000;background:rgba(10,22,40,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;height:70px;display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{display:flex;align-items:center;gap:.75rem;text-decoration:none}
+    .nav-logo img{height:42px;border-radius:6px;object-fit:contain}
+    .nav-logo-fb{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--gold);letter-spacing:2px;display:none}
+    .nav-center ul{display:flex;align-items:center;gap:2rem;list-style:none}
+    .nav-center ul a{color:var(--fg);text-decoration:none;font-size:.875rem;font-weight:500;transition:color .2s;position:relative;padding-bottom:2px}
+    .nav-center ul a:hover{color:var(--gold)}
+    .nav-center ul a.active{color:var(--gold)}
+    .nav-center ul a.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--gold);border-radius:2px}
+    .nav-right{display:flex;align-items:center;gap:1rem}
+    .lang-btn{background:rgba(212,175,55,.1);border:1px solid var(--border);color:var(--gold);font-size:.8rem;font-weight:700;padding:.35rem .9rem;border-radius:100px;cursor:pointer;transition:all .2s;letter-spacing:1px}
+    .lang-btn:hover{background:rgba(212,175,55,.2)}
+    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;background:none;border:none}
+    .hamburger span{width:24px;height:2px;background:var(--fg);border-radius:2px;transition:all .3s;display:block}
+    .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+    .hamburger.open span:nth-child(2){opacity:0}
+    .hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+    .mob-menu{display:none;position:fixed;top:73px;left:0;right:0;background:rgba(10,22,40,.98);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:1.5rem 2rem;z-index:999;flex-direction:column;gap:1rem}
+    .mob-menu.open{display:flex}
+    .mob-menu a{color:var(--fg);text-decoration:none;font-size:1rem;font-weight:500;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .mob-menu a.active{color:var(--gold)}
+
+    .page-hero{padding:10rem 2rem 4rem;text-align:center}
+    .hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:100px;padding:.4rem 1.2rem;font-size:.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem}
+    .page-hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:1rem}
+
+    .status-row{display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem}
+    .status-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1.1rem;border-radius:100px;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+    .status-upcoming{background:rgba(160,176,192,.15);color:var(--fg2);border:1px solid rgba(160,176,192,.3)}
+    .status-registration{background:rgba(99,179,237,.15);color:#63B3ED;border:1px solid rgba(99,179,237,.3)}
+    .status-qualif{background:rgba(0,212,170,.15);color:var(--success);border:1px solid rgba(0,212,170,.3)}
+    .status-final{background:rgba(212,175,55,.2);color:var(--gold);border:1px solid rgba(212,175,55,.4)}
+    .status-finished{background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.3)}
+    .pulse{animation:pulse 1.5s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .last-updated{font-size:.78rem;color:var(--fg2);text-align:center;margin-bottom:2rem}
+
+    /* TABS */
+    .tabs{display:flex;gap:.5rem;max-width:900px;margin:0 auto 2rem;padding:0 2rem;justify-content:center}
+    .tab-btn{background:var(--card);border:1px solid var(--border);color:var(--fg2);padding:.625rem 1.5rem;border-radius:100px;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s}
+    .tab-btn:hover{border-color:var(--gold);color:var(--fg)}
+    .tab-btn.active{background:rgba(212,175,55,.15);border-color:var(--gold);color:var(--gold)}
+
+    /* CONTENT */
+    .tab-content{display:none;max-width:900px;margin:0 auto;padding:0 2rem 5rem}
+    .tab-content.active{display:block}
+
+    /* PODIUM */
+    .podium{display:flex;gap:1rem;margin-bottom:2rem;align-items:flex-end}
+    .podium-place{flex:1;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem 1rem;transition:transform .3s}
+    .podium-place:hover{transform:translateY(-4px)}
+    .podium-1{border-color:rgba(212,175,55,.5);background:rgba(212,175,55,.06);order:2;transform:translateY(-12px)}
+    .podium-2{border-color:rgba(192,192,192,.4);background:rgba(192,192,192,.04);order:1}
+    .podium-3{border-color:rgba(205,127,50,.4);background:rgba(205,127,50,.04);order:3}
+    .podium-medal{font-size:2rem;margin-bottom:.5rem}
+    .podium-name{font-weight:700;font-size:1rem;margin-bottom:.25rem}
+    .podium-school{font-size:.8rem;color:var(--fg2);margin-bottom:.5rem}
+    .podium-score{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--gold)}
+    .podium-prize{display:inline-block;background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.3);border-radius:100px;padding:.2rem .7rem;font-size:.72rem;font-weight:700;margin-top:.4rem}
+
+    /* FILTERS */
+    .filters{display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .filter-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.625rem 1rem;font-size:.875rem;color:var(--fg);outline:none;font-family:'Inter',sans-serif;transition:border-color .2s;flex:1;min-width:150px}
+    .filter-input:focus{border-color:var(--gold)}
+    .filter-input option{background:var(--bg2)}
+
+    /* TABLE */
+    .lb-table{width:100%;border-collapse:collapse}
+    .lb-table th{text-align:left;padding:.75rem 1rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--fg2);border-bottom:1px solid var(--border)}
+    .lb-table td{padding:.875rem 1rem;font-size:.875rem;border-bottom:1px solid rgba(255,255,255,.04)}
+    .lb-table tr:hover td{background:rgba(255,255,255,.02)}
+    .rank-1 td{background:rgba(212,175,55,.08)}
+    .rank-2 td{background:rgba(192,192,192,.05)}
+    .rank-3 td{background:rgba(205,127,50,.05)}
+    .rank-num{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold)}
+    .score-num{font-family:'JetBrains Mono',monospace;font-weight:600}
+    .score-total{color:var(--gold);font-weight:700}
+
+    /* SKELETON */
+    .skeleton{background:rgba(255,255,255,.06);border-radius:6px;animation:shimmer 1.5s ease-in-out infinite}
+    @keyframes shimmer{0%{opacity:.4}50%{opacity:.8}100%{opacity:.4}}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center;padding:5rem 2rem;background:var(--card);border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(10px)}
+    .empty-icon{font-size:3rem;margin-bottom:1rem}
+    .empty-title{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:.75rem}
+    .empty-desc{color:var(--fg2);font-size:.9rem;max-width:400px;margin:0 auto;line-height:1.7}
+
+    footer{background:rgba(6,14,26,.95);border-top:1px solid var(--border);padding:3rem 2rem 2rem}
+    .foot-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem}
+    .foot-logo{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
+    .foot-logo img{height:36px;border-radius:6px}
+    .foot-logo-fb{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold);font-weight:700;display:none}
+    .foot-desc{font-size:.875rem;color:var(--fg2);line-height:1.7;margin-bottom:1.5rem}
+    .foot-social{display:flex;gap:.75rem}
+    .soc-btn{width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--fg2);text-decoration:none;transition:all .2s;font-weight:700}
+    .soc-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .foot-col h4{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:1.25rem}
+    .foot-col ul{list-style:none}
+    .foot-col ul li{margin-bottom:.75rem}
+    .foot-col ul li a{color:var(--fg2);text-decoration:none;font-size:.875rem;transition:color .2s}
+    .foot-col ul li a:hover{color:var(--fg)}
+    .foot-bottom{max-width:1100px;margin:2rem auto 0;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+    .foot-copy{font-size:.8rem;color:var(--fg2)}
+    .foot-contact a{color:var(--gold);text-decoration:none;font-size:.8rem}
+    #offline-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#FF4444;color:white;text-align:center;padding:10px;z-index:10000;font-size:.875rem}
+    @media(max-width:768px){
+      .nav-center,.nav-center ul{display:none}
+      .hamburger{display:flex}
+      .podium{flex-direction:column;align-items:stretch}
+      .podium-1{order:0;transform:none}
+      .foot-inner{grid-template-columns:1fr;gap:2rem}
+      .foot-bottom{flex-direction:column;text-align:center}
+      .tab-content{padding:0 1rem 3rem}
+      .lb-table th:nth-child(5),.lb-table td:nth-child(5),.lb-table th:nth-child(6),.lb-table td:nth-child(6){display:none}
+    }
+    @media print{nav,footer,#offline-banner,#scroll-bar,.tabs{display:none!important}body{background:white;color:black}.lb-table td,.lb-table th{border:1px solid #ccc}th{background:#f0f0f0}}
+  </style>
+</head>
+<body>
+  <div id="scroll-bar"></div>
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="logo-cmf.jpg.jpg" alt="CMF" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+      <span class="nav-logo-fb">CMF</span>
+    </a>
+    <div class="nav-center">
+      <ul>
+        <li><a href="index.html" data-i18n="navHome">Accueil</a></li>
+        <li><a href="rules.html" data-i18n="navRules">Règles</a></li>
+        <li><a href="register.html" data-i18n="navReg">Inscription</a></li>
+        <li><a href="leaderboard.html" class="active" data-i18n="navLB">Classement</a></li>
+        <li><a href="join.html" data-i18n="navSchool">Votre école</a></li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <button class="lang-btn" id="lang-btn">EN</button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+  <div class="mob-menu" id="mob-menu">
+    <a href="index.html" data-i18n="navHome">Accueil</a>
+    <a href="rules.html" data-i18n="navRules">Règles</a>
+    <a href="register.html" data-i18n="navReg">Inscription</a>
+    <a href="leaderboard.html" class="active" data-i18n="navLB">Classement</a>
+    <a href="join.html" data-i18n="navSchool">Votre école</a>
+  </div>
+
+  <div class="page-hero">
+    <div class="hero-badge">🏆 Classement</div>
+    <h1 data-i18n="heroTitle">Classement en temps réel</h1>
+    <div class="status-row">
+      <span class="status-badge status-upcoming" id="status-badge">— À venir</span>
+    </div>
+    <p class="last-updated" id="last-updated" data-i18n="lastUpdated">Dernière mise à jour : —</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="qualif" data-i18n="tabQualif">Qualifications</button>
+    <button class="tab-btn" data-tab="final" data-i18n="tabFinal">Finale</button>
+    <button class="tab-btn" data-tab="schools" data-i18n="tabSchools">Écoles</button>
+  </div>
+
+  <!-- TAB: QUALIF -->
+  <div class="tab-content active" id="tab-qualif">
+    <div class="podium" id="podium-qualif" style="display:none"></div>
+    <div class="filters">
+      <input type="text" class="filter-input" id="search-qualif" placeholder="🔍 Rechercher un candidat..." data-i18n-ph="searchPlaceholder" />
+      <select class="filter-input" id="filter-school-qualif">
+        <option value="">Toutes les écoles</option>
+      </select>
+    </div>
+    <div id="table-qualif-wrap"><div style="text-align:center;padding:4rem;color:var(--fg2)"><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>Chargement...</div></div>
+  </div>
+
+  <!-- TAB: FINAL -->
+  <div class="tab-content" id="tab-final">
+    <div class="podium" id="podium-final" style="display:none"></div>
+    <div id="table-final-wrap"></div>
+  </div>
+
+  <!-- TAB: SCHOOLS -->
+  <div class="tab-content" id="tab-schools">
+    <div id="table-schools-wrap"></div>
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div>
+        <div class="foot-logo"><img src="logo-cmf.jpg.jpg" alt="CMF" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" /><span class="foot-logo-fb">CMF</span></div>
+        <p class="foot-desc">Centrale Marseille Finance — L'association finance de Centrale Méditerranée.</p>
+        <div class="foot-social"><a href="#" class="soc-btn" id="f-ig">ig</a><a href="#" class="soc-btn" id="f-li">in</a></div>
+      </div>
+      <div class="foot-col">
+        <h4 data-i18n="fNav">Navigation</h4>
+        <ul>
+          <li><a href="index.html" data-i18n="navHome">Accueil</a></li>
+          <li><a href="rules.html" data-i18n="navRules">Règles</a></li>
+          <li><a href="register.html" data-i18n="navReg">Inscription</a></li>
+          <li><a href="leaderboard.html" data-i18n="navLB">Classement</a></li>
+          <li><a href="join.html" data-i18n="navSchool">Votre école</a></li>
+          <li><a href="sponsors.html">Sponsors</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4 data-i18n="fContact">Contact</h4>
+        <ul><li><a href="mailto:contact@cmf-marseille.fr" id="f-email">contact@cmf-marseille.fr</a></li></ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span class="foot-copy">© 2026 Centrale Marseille Finance. Tous droits réservés.</span>
+      <div class="foot-contact"><a href="mailto:contact@cmf-marseille.fr" id="f-email2">contact@cmf-marseille.fr</a></div>
+    </div>
+  </footer>
+  <div id="offline-banner">⚠️ Connexion perdue — Les données peuvent ne pas être à jour / Connection lost — Data may be outdated</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    const firebaseConfig={apiKey:"AIzaSyAH1e0LBV8aFX_d7Cahmh7M8KyVbOkMHHw",authDomain:"cmf-brain-teaser-ac440.firebaseapp.com",databaseURL:"https://cmf-brain-teaser-ac440-default-rtdb.europe-west1.firebasedatabase.app",projectId:"cmf-brain-teaser-ac440",storageBucket:"cmf-brain-teaser-ac440.firebasestorage.app",messagingSenderId:"907251407052",appId:"1:907251407052:web:3801d3f8128f070b1e4a69"};
+    const app=initializeApp(firebaseConfig);const db=getDatabase(app);
+    function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML}
+    const unsubs=[];
+    window.addEventListener('beforeunload',()=>unsubs.forEach(u=>u()));
+    window.addEventListener('pagehide',()=>unsubs.forEach(u=>u()));
+
+    const T={
+      fr:{navHome:'Accueil',navRules:'Règles',navReg:'Inscription',navLB:'Classement',navSchool:'Votre école',
+        heroTitle:'Classement en temps réel',lastUpdated:'Dernière mise à jour : ',
+        tabQualif:'Qualifications',tabFinal:'Finale',tabSchools:'Écoles',
+        statusUpcoming:'À venir',statusRegistration:'Inscriptions ouvertes',statusQualif:'Qualifications en cours',statusFinal:'Finale',statusFinished:'Terminé',
+        colRank:'Rang',colCandidate:'Candidat',colSchool:'École',colBase:'Base /20',colBonus:'Bonus',colTotal:'Total',colTime:'Heure',
+        colSchoolName:'École',colType:'Type',colParticipants:'Participants',colAvg:'Moy. Score',colBest:'Meilleur',
+        emptyQualif:'Les résultats apparaîtront ici en temps réel',emptyFinal:'Les finalistes seront annoncés prochainement',
+        fNav:'Navigation',fContact:'Contact'},
+      en:{navHome:'Home',navRules:'Rules',navReg:'Register',navLB:'Leaderboard',navSchool:'Your school',
+        heroTitle:'Live Leaderboard',lastUpdated:'Last updated: ',
+        tabQualif:'Qualifications',tabFinal:'Finals',tabSchools:'Schools',
+        statusUpcoming:'Upcoming',statusRegistration:'Registration open',statusQualif:'Qualifications live',statusFinal:'Finals',statusFinished:'Finished',
+        colRank:'Rank',colCandidate:'Candidate',colSchool:'School',colBase:'Base /20',colBonus:'Bonus',colTotal:'Total',colTime:'Time',
+        colSchoolName:'School',colType:'Type',colParticipants:'Participants',colAvg:'Avg Score',colBest:'Best',
+        emptyQualif:'Results will appear here in real time',emptyFinal:'Finalists will be announced soon',
+        fNav:'Navigation',fContact:'Contact'}
+    };
+    let lang=localStorage.getItem('lang')||'fr';
+    function applyT(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[lang][k]!==undefined)el.textContent=T[lang][k]});document.getElementById('lang-btn').textContent=lang==='fr'?'EN':'FR'}
+    document.getElementById('lang-btn').addEventListener('click',()=>{lang=lang==='fr'?'en':'fr';localStorage.setItem('lang',lang);applyT();renderAll()});
+    applyT();
+    document.getElementById('hamburger').addEventListener('click',function(){this.classList.toggle('open');document.getElementById('mob-menu').classList.toggle('open')});
+    const bar=document.getElementById('scroll-bar');
+    window.addEventListener('scroll',()=>{bar.style.width=(window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)*100)+'%'});
+    window.addEventListener('online',()=>document.getElementById('offline-banner').style.display='none');
+    window.addEventListener('offline',()=>document.getElementById('offline-banner').style.display='block');
+    if(!navigator.onLine)document.getElementById('offline-banner').style.display='block';
+
+    // TABS
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    let qualifScores=[],finalScores=[],allScores=[];
+
+    function updateTimestamp(){document.getElementById('last-updated').textContent=(T[lang].lastUpdated)+new Date().toLocaleTimeString(lang==='fr'?'fr-FR':'en-GB')}
+
+    function updateStatusBadge(status){
+      const el=document.getElementById('status-badge');
+      const map={
+        upcoming:{cls:'status-upcoming',text:T[lang].statusUpcoming,pulse:false},
+        registration:{cls:'status-registration',text:T[lang].statusRegistration,pulse:false},
+        qualif:{cls:'status-qualif',text:'● '+T[lang].statusQualif,pulse:true},
+        final:{cls:'status-final',text:'● '+T[lang].statusFinal,pulse:true},
+        finished:{cls:'status-finished',text:T[lang].statusFinished,pulse:false}
+      };
+      const s=map[status]||map.upcoming;
+      el.className='status-badge '+s.cls+(s.pulse?' pulse':'');
+      el.textContent=s.text;
+    }
+
+    function renderPodium(containerId,scores){
+      const c=document.getElementById(containerId);
+      if(scores.length<1){c.style.display='none';return}
+      c.style.display='flex';
+      const medals=['🥇','🥈','🥉'];
+      c.innerHTML='';
+      [1,0,2].forEach(idx=>{
+        if(!scores[idx])return;
+        const s=scores[idx];
+        const cls=['podium-1','podium-2','podium-3'][idx];
+        c.innerHTML+=`<div class="podium-place ${cls}">
+          <div class="podium-medal">${medals[idx]}</div>
+          <div class="podium-name">${esc(s.firstName)} ${esc(s.lastName)}</div>
+          <div class="podium-school">${esc(s.school||'')}</div>
+          <div class="podium-score">${s.totalScore}</div>
+          ${idx===0?'<div class="podium-prize">💰 200€</div>':''}
+        </div>`;
+      });
+    }
+
+    function renderTable(wrapId,scores,schoolFilter='',nameSearch=''){
+      const wrap=document.getElementById(wrapId);
+      let filtered=scores.filter(s=>{
+        const matchSchool=!schoolFilter||s.school===schoolFilter;
+        const matchName=!nameSearch||(s.firstName+' '+s.lastName).toLowerCase().includes(nameSearch.toLowerCase());
+        return matchSchool&&matchName;
+      });
+      if(!filtered.length){
+        wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Pas encore de résultats</div><div class="empty-desc">${T[lang].emptyQualif}</div></div>`;
+        return;
+      }
+      let html=`<div style="overflow-x:auto"><table class="lb-table"><thead><tr>
+        <th>${T[lang].colRank}</th><th>${T[lang].colCandidate}</th><th>${T[lang].colSchool}</th>
+        <th>${T[lang].colBase}</th><th>${T[lang].colBonus}</th><th class="score-total">${T[lang].colTotal}</th>
+        <th>${T[lang].colTime}</th></tr></thead><tbody>`;
+      filtered.forEach((s,i)=>{
+        const rank=i+1;
+        const rowCls=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'';
+        const dt=s.timestamp?new Date(s.timestamp).toLocaleTimeString(lang==='fr'?'fr-FR':'en-GB',{hour:'2-digit',minute:'2-digit'}):'—';
+        html+=`<tr class="${rowCls}"><td class="rank-num">${rank<=3?['🥇','🥈','🥉'][rank-1]+' ':rank}</td>
+          <td><strong>${esc(s.firstName)} ${esc(s.lastName)}</strong></td>
+          <td>${esc(s.school||'—')}</td>
+          <td class="score-num">${s.scoreBase??'—'}</td>
+          <td class="score-num">+${s.speedBonus??0}</td>
+          <td class="score-num score-total">${s.totalScore??'—'}</td>
+          <td style="color:var(--fg2);font-size:.8rem">${dt}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+      wrap.innerHTML=html;
+    }
+
+    function renderSchoolsTab(scoresData){
+      const wrap=document.getElementById('table-schools-wrap');
+      if(!scoresData.length){
+        wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🏫</div><div class="empty-title">Pas encore de données</div><div class="empty-desc">${T[lang].emptyQualif}</div></div>`;
+        return;
+      }
+      const bySchool={};
+      scoresData.forEach(s=>{
+        if(!s.school)return;
+        if(!bySchool[s.school])bySchool[s.school]={name:s.school,scores:[],type:''};
+        bySchool[s.school].scores.push(s.totalScore??0);
+      });
+      const rows=Object.values(bySchool).map(r=>({
+        name:r.name,count:r.scores.length,
+        avg:r.scores.reduce((a,b)=>a+b,0)/r.scores.length,
+        best:Math.max(...r.scores)
+      })).sort((a,b)=>b.avg-a.avg);
+      let html=`<div style="overflow-x:auto"><table class="lb-table"><thead><tr>
+        <th>${T[lang].colRank}</th><th>${T[lang].colSchoolName}</th>
+        <th>${T[lang].colParticipants}</th><th>${T[lang].colAvg}</th><th>${T[lang].colBest}</th></tr></thead><tbody>`;
+      rows.forEach((r,i)=>{
+        html+=`<tr class="${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">
+          <td class="rank-num">${i+1}</td><td><strong>${esc(r.name)}</strong></td>
+          <td class="score-num">${r.count}</td>
+          <td class="score-num">${r.avg.toFixed(1)}</td>
+          <td class="score-num score-total">${r.best}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+      wrap.innerHTML=html;
+    }
+
+    function populateSchoolFilter(scores){
+      const sel=document.getElementById('filter-school-qualif');
+      const current=sel.value;
+      const schools=[...new Set(scores.map(s=>s.school).filter(Boolean))].sort();
+      sel.innerHTML='<option value="">Toutes les écoles</option>';
+      schools.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+      sel.value=current;
+    }
+
+    function renderAll(){
+      updateStatusBadge(currentStatus);
+      renderPodium('podium-qualif',qualifScores);
+      renderTable('table-qualif-wrap',qualifScores,document.getElementById('filter-school-qualif').value,document.getElementById('search-qualif').value);
+      renderPodium('podium-final',finalScores);
+      if(!finalScores.length){
+        document.getElementById('table-final-wrap').innerHTML=`<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Finale</div><div class="empty-desc">${T[lang].emptyFinal}</div></div>`;
+      }else{
+        renderTable('table-final-wrap',finalScores);
+      }
+      renderSchoolsTab(allScores);
+      populateSchoolFilter(qualifScores);
+      updateTimestamp();
+    }
+
+    let currentStatus='upcoming';
+    document.getElementById('search-qualif').addEventListener('input',()=>renderTable('table-qualif-wrap',qualifScores,document.getElementById('filter-school-qualif').value,document.getElementById('search-qualif').value));
+    document.getElementById('filter-school-qualif').addEventListener('change',()=>renderTable('table-qualif-wrap',qualifScores,document.getElementById('filter-school-qualif').value,document.getElementById('search-qualif').value));
+
+    unsubs.push(onValue(ref(db,'/settings/competitionStatus'),s=>{currentStatus=s.exists()?s.val():'upcoming';renderAll()}));
+
+    unsubs.push(onValue(ref(db,'/scores'),s=>{
+      allScores=[];
+      if(s.exists())allScores=Object.values(s.val());
+      qualifScores=allScores.filter(x=>x.phase==='qualif').sort((a,b)=>(b.totalScore??0)-(a.totalScore??0));
+      finalScores=allScores.filter(x=>x.phase==='final').sort((a,b)=>(b.totalScore??0)-(a.totalScore??0));
+      renderAll();
+    }));
+
+    get(ref(db,'/settings/content')).then(s=>{if(s.exists()){const d=s.val();if(d.instagramUrl)document.getElementById('f-ig').href=d.instagramUrl;if(d.linkedinUrl)document.getElementById('f-li').href=d.linkedinUrl;if(d.footerContact){['f-email','f-email2'].forEach(id=>{const el=document.getElementById(id);el.href='mailto:'+d.footerContact;el.textContent=d.footerContact})}}}).catch(()=>{});
+  </script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue Jury – CMF Brain Teaser</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0A1628;--bg2:#0F2040;--gold:#D4AF37;--gold-l:#F0D060;--fg:#FFFFFF;--fg2:#A0B0C0;--success:#00D4AA;--error:#FF4444;--card:rgba(255,255,255,0.05);--border:rgba(212,175,55,0.2)}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-height:100vh;max-width:700px;margin:0 auto;padding:0 1rem 4rem}
+
+    /* HEADER */
+    .jury-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;gap:.75rem;flex-wrap:wrap}
+    .jury-info{display:flex;align-items:center;gap:.75rem}
+    .jury-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+    .jury-name{font-weight:700;font-size:1rem}
+    .jury-slot{background:rgba(212,175,55,.1);border:1px solid var(--border);color:var(--gold);font-size:.75rem;font-weight:700;padding:.25rem .75rem;border-radius:100px;letter-spacing:1px;text-transform:uppercase}
+    .logout-btn{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.25);color:#FF6666;padding:.4rem .9rem;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:'Inter',sans-serif;transition:all .2s}
+    .logout-btn:hover{background:rgba(255,68,68,.2)}
+
+    /* VIDEO LINK */
+    .video-card{background:rgba(15,32,64,.9);border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px)}
+    .vc-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+    .vc-url{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--fg2);background:rgba(0,0,0,.3);border-radius:8px;padding:.625rem .875rem;margin-bottom:.875rem;word-break:break-all;border:1px solid rgba(255,255,255,.06)}
+    .vc-btns{display:flex;gap:.75rem;flex-wrap:wrap}
+    .vc-btn{flex:1;padding:.7rem 1rem;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:.5rem;min-width:120px}
+    .vc-copy{background:rgba(212,175,55,.1);border:1px solid var(--border);color:var(--gold)}
+    .vc-copy:hover{background:rgba(212,175,55,.2)}
+    .vc-open{background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);border:none}
+    .vc-open:hover{transform:translateY(-1px)}
+
+    /* CANDIDATES */
+    .candidates-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .candidates-title{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700}
+    .candidates-count{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--fg2)}
+
+    .cand-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-bottom:.875rem;transition:border-color .3s}
+    .cand-card.passed{border-color:rgba(0,212,170,.25);background:rgba(0,212,170,.03)}
+    .cand-card.active-session{border-color:rgba(212,175,55,.4);background:rgba(212,175,55,.04)}
+    .cand-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.625rem}
+    .cand-time{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--fg2);font-weight:700}
+    .status-badge{display:inline-block;padding:.2rem .65rem;border-radius:100px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+    .sb-upcoming{background:rgba(160,176,192,.12);color:var(--fg2);border:1px solid rgba(160,176,192,.25)}
+    .sb-active{background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.3);animation:pulse .8s ease-in-out infinite alternate}
+    @keyframes pulse{from{opacity:1}to{opacity:.6}}
+    .sb-passed{background:rgba(0,212,170,.12);color:var(--success);border:1px solid rgba(0,212,170,.25)}
+    .sb-noshow{background:rgba(251,191,36,.12);color:#FBB824;border:1px solid rgba(251,191,36,.25)}
+    .cand-name{font-weight:700;font-size:1rem;margin-bottom:.25rem}
+    .cand-school{font-size:.82rem;color:var(--fg2)}
+    .cand-meta{font-size:.78rem;color:var(--fg2);margin-top:.25rem}
+    .score-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;padding:.25rem .7rem;border-radius:100px;margin-top:.5rem}
+    .cand-actions{display:flex;gap:.625rem;margin-top:.875rem;flex-wrap:wrap}
+    .ca-btn{flex:1;padding:.625rem 1rem;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;min-width:100px;text-align:center}
+    .ca-start{background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);border:none}
+    .ca-start:hover{transform:translateY(-1px)}
+    .ca-score{background:rgba(212,175,55,.1);border:1px solid var(--border);color:var(--gold)}
+    .ca-score:hover{background:rgba(212,175,55,.2)}
+    .ca-noshow{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#FBB824;font-size:.75rem}
+
+    /* Q-CARDS */
+    .q-card{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:.875rem;transition:border-color .2s;margin-bottom:.5rem}
+    .q-card.correct{border-color:rgba(0,212,170,.4);background:rgba(0,212,170,.04)}
+    .q-card.incorrect{border-color:rgba(255,68,68,.3)}
+    .q-btn{flex:1;padding:.35rem .6rem;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--fg2);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+    .q-btn.active-green{background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);color:var(--success)}
+    .q-btn.active-red{background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.4);color:var(--error)}
+    .score-disp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
+    .score-disp-cell{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:.625rem;text-align:center}
+    .score-disp-cell label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--fg2);display:block;margin-bottom:.25rem}
+    /* SCORE PANEL */
+    .score-panel{display:none;background:rgba(15,32,64,.95);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-top:.5rem;backdrop-filter:blur(20px)}
+    .score-panel.open{display:block;animation:slideDown .3s ease}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    .sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+    .sp-lbl{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--fg2)}
+    .sp-ctrl{display:flex;align-items:center;gap:.625rem}
+    .sp-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--fg);font-size:1.1rem;cursor:pointer;transition:all .2s}
+    .sp-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .sp-num{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--gold);width:50px;text-align:center}
+    .sp-total{font-family:'JetBrains Mono',monospace;font-size:1.75rem;font-weight:700;color:var(--gold);text-align:center;background:rgba(212,175,55,.06);border-radius:10px;padding:.625rem;border:1px solid rgba(212,175,55,.2);margin-bottom:1rem}
+    .sp-textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.625rem .875rem;font-size:.875rem;color:var(--fg);font-family:'Inter',sans-serif;resize:vertical;min-height:50px;outline:none;margin-bottom:.875rem;transition:border-color .2s}
+    .sp-textarea:focus{border-color:var(--gold)}
+    .sp-save{width:100%;padding:.875rem;border:none;border-radius:10px;background:linear-gradient(135deg,#B8960C,var(--gold));color:var(--bg);font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:.5rem}
+    .sp-cancel{width:100%;padding:.75rem;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--fg2);font-weight:600;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif}
+
+    /* TIMER */
+    .timer-display{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;text-align:center;margin:.75rem 0}
+    .timer-display.warning{color:var(--error);animation:pulse .5s ease-in-out infinite alternate}
+    .timer-btn{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);color:var(--success);padding:.5rem 1.25rem;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;font-family:'Inter',sans-serif}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.4);color:var(--success);padding:.875rem 1.5rem;border-radius:12px;font-weight:600;z-index:9998;opacity:0;transition:all .3s;font-size:.875rem;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+    #offline-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#FF4444;color:white;text-align:center;padding:10px;z-index:10000;font-size:.875rem}
+
+    /* Mobile touch-friendly */
+    @media(max-width:600px){
+      .ca-btn{min-height:44px;font-size:.85rem;padding:.75rem 1rem}
+      .sp-btn{min-width:44px;min-height:44px}
+      .vc-btn{min-height:44px}
+      .logout-btn{min-height:44px;padding:.5rem 1rem}
+      .sp-save,.sp-cancel{min-height:44px}
+      .timer-btn{min-height:44px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="jury-header">
+    <div class="jury-info">
+      <div class="jury-dot" id="jury-dot"></div>
+      <div>
+        <div class="jury-name" id="jury-name">Chargement...</div>
+        <div class="jury-slot" id="jury-slot"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <button id="lang-btn" style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.2);color:var(--gold);font-size:.8rem;font-weight:700;padding:.35rem .9rem;border-radius:100px;cursor:pointer;letter-spacing:1px">EN</button>
+      <a href="index.html" style="color:#D4AF37;text-decoration:none;font-size:.85rem;border:1px solid #D4AF37;padding:6px 12px;border-radius:6px;margin-right:8px;">← Site</a>
+      <button class="logout-btn" id="logout-btn">Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- VIDEO LINK -->
+  <div class="video-card" id="video-card" style="display:none">
+    <div class="vc-title">📹 Lien de réunion / Meeting Link</div>
+    <div class="vc-url" id="vc-url">—</div>
+    <div class="vc-btns">
+      <button class="vc-btn vc-copy" id="vc-copy-btn">📋 Copier le lien</button>
+      <a class="vc-btn vc-open" id="vc-open-link" href="#" target="_blank" rel="noopener">🔗 Ouvrir</a>
+    </div>
+  </div>
+
+  <!-- CANDIDATES -->
+  <div class="candidates-header">
+    <h2 class="candidates-title" data-i18n="myCandidates">Mes candidats</h2>
+    <span class="candidates-count" id="cand-count">— candidats</span>
+  </div>
+  <div id="candidates-list">
+    <div style="text-align:center;padding:3rem;color:var(--fg2)">
+      <div style="width:36px;height:36px;border:3px solid rgba(212,175,55,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>
+      Chargement des candidats...
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div id="offline-banner">⚠️ Connexion perdue — Les données peuvent ne pas être à jour</div>
+
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    const firebaseConfig={apiKey:"AIzaSyAH1e0LBV8aFX_d7Cahmh7M8KyVbOkMHHw",authDomain:"cmf-brain-teaser-ac440.firebaseapp.com",databaseURL:"https://cmf-brain-teaser-ac440-default-rtdb.europe-west1.firebasedatabase.app",projectId:"cmf-brain-teaser-ac440",storageBucket:"cmf-brain-teaser-ac440.firebasestorage.app",messagingSenderId:"907251407052",appId:"1:907251407052:web:3801d3f8128f070b1e4a69"};
+    const app=initializeApp(firebaseConfig);const db=getDatabase(app);
+    function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML}
+    const unsubs=[];
+    window.addEventListener('beforeunload',()=>unsubs.forEach(u=>u()));
+    window.addEventListener('pagehide',()=>unsubs.forEach(u=>u()));
+
+    const T={
+      fr:{myCandidates:'Mes candidats'},
+      en:{myCandidates:'My candidates'}
+    };
+    let lang=localStorage.getItem('lang')||'fr';
+    function applyT(){document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[lang][k]!==undefined)el.textContent=T[lang][k]});document.getElementById('lang-btn').textContent=lang==='fr'?'EN':'FR'}
+    document.getElementById('lang-btn').addEventListener('click',()=>{lang=lang==='fr'?'en':'fr';localStorage.setItem('lang',lang);applyT()});
+    applyT();
+
+    // AUTH CHECK
+    let juryData=null;
+    try{juryData=JSON.parse(sessionStorage.getItem('cmf_jury')||'null')}catch(e){}
+    if(!juryData||!juryData.juryId){window.location.href='jury-login.html'}
+
+    const slotMap={morning:'Matin 9h-12h',afternoon:'Après-midi 14h-17h',evening:'Soir 17h-19h'};
+    let scores={};
+
+    // HEADER
+    document.getElementById('jury-dot').style.background=juryData.color||'#D4AF37';
+    document.getElementById('jury-name').textContent=(juryData.firstName||'')+' '+(juryData.lastName||'');
+    document.getElementById('jury-slot').textContent=slotMap[juryData.timeSlot]||juryData.timeSlot||'';
+
+    // VIDEO LINK
+    if(juryData.videoLink){
+      document.getElementById('video-card').style.display='block';
+      document.getElementById('vc-url').textContent=juryData.videoLink;
+      document.getElementById('vc-open-link').href=juryData.videoLink;
+      document.getElementById('vc-copy-btn').addEventListener('click',async()=>{
+        try{await navigator.clipboard.writeText(juryData.videoLink);showToast('Lien copié !');}catch(e){showToast('Erreur de copie.',true)}
+      });
+    }
+
+    // LOGOUT
+    document.getElementById('logout-btn').addEventListener('click',()=>{
+      if(confirm('Se déconnecter ?')){sessionStorage.removeItem('cmf_jury');window.location.href='jury-login.html'}
+    });
+
+    // OFFLINE
+    window.addEventListener('online',()=>document.getElementById('offline-banner').style.display='none');
+    window.addEventListener('offline',()=>document.getElementById('offline-banner').style.display='block');
+    if(!navigator.onLine)document.getElementById('offline-banner').style.display='block';
+
+    // TOAST
+    function showToast(msg,isErr=false){
+      const t=document.getElementById('toast');t.textContent=msg;
+      t.style.background=isErr?'rgba(255,68,68,.15)':'rgba(0,212,170,.15)';
+      t.style.borderColor=isErr?'rgba(255,68,68,.4)':'rgba(0,212,170,.4)';
+      t.style.color=isErr?'#FF4444':'var(--success)';
+      t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+    }
+
+    // TIMERS
+    const timers={};
+    function startTimer(candId,el){
+      if(timers[candId])return;
+      let secs=12*60;
+      const disp=el.querySelector('.timer-display');
+      timers[candId]=setInterval(()=>{
+        secs--;const m=Math.floor(secs/60);const s=secs%60;
+        if(disp){disp.textContent=(m+':'+String(s).padStart(2,'0'));if(secs<120)disp.classList.add('warning')}
+        if(secs<=0)clearInterval(timers[candId]);
+      },1000);
+    }
+
+    // LOAD SCORES
+    unsubs.push(onValue(ref(db,'/scores'),s=>{
+      scores={};
+      if(s.exists())Object.entries(s.val()).forEach(([id,sc])=>{scores[sc.candidateId]=sc});
+    }));
+
+    // CANDIDATES
+    unsubs.push(onValue(ref(db,'/registrations'),snap=>{
+      const list=document.getElementById('candidates-list');
+      if(!snap.exists()){list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--fg2)">Aucun candidat assigné</div>';return}
+      const mine=Object.entries(snap.val()).filter(([,r])=>r.assignedJuryId===juryData.juryId);
+      mine.sort((a,b)=>{
+        const ta=a[1].assignedTime||'99:99',tb=b[1].assignedTime||'99:99';
+        const statOrder={assigned:0,pending:1,noshow:2,passed:3,cancelled:4};
+        if((a[1].status==='passed'||a[1].status==='noshow')&&(b[1].status!=='passed'&&b[1].status!=='noshow'))return 1;
+        if((b[1].status==='passed'||b[1].status==='noshow')&&(a[1].status!=='passed'&&a[1].status!=='noshow'))return -1;
+        return ta.localeCompare(tb);
+      });
+      document.getElementById('cand-count').textContent=mine.length+' candidat'+(mine.length>1?'s':'');
+      list.innerHTML='';
+      if(!mine.length){list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--fg2)">Aucun candidat assigné à ce jury</div>';return}
+      mine.forEach(([id,r])=>{
+        const sc=scores[id];
+        const passed=r.status==='passed';
+        const noshow=r.status==='noshow';
+        const card=document.createElement('div');
+        card.className='cand-card'+(passed?' passed':'');
+        card.id='cc-'+id;
+        const sbCls=passed?'sb-passed':noshow?'sb-noshow':'sb-upcoming';
+        const sbTxt=passed?'Passé ✓':noshow?'No-show':'À venir';
+        card.innerHTML=`
+          <div class="cand-top">
+            <div>
+              <div class="cand-time">${esc(r.assignedTime||'—')}</div>
+            </div>
+            <span class="status-badge ${sbCls}">${sbTxt}</span>
+          </div>
+          <div class="cand-name">${esc((r.firstName||'')+' '+(r.lastName||''))}</div>
+          <div class="cand-school">${esc(r.school||'')}</div>
+          <div class="cand-meta">Année: ${esc(r.year||'—')} • Filière: ${esc(r.filiere||'—')} • Plateforme: ${esc(r.platform||'—')}</div>
+          ${sc?`<div class="score-badge">✓ Score: ${sc.totalScore}/25</div>`:''}
+          <div class="cand-actions">
+            ${!passed&&!noshow?`<button class="ca-btn ca-start" onclick="startSession('${id}',this)">▶ Démarrer timer</button>`:''}
+            <button class="ca-btn ca-score" onclick="toggleScorePanel('${id}')">${passed?'Modifier score':'Saisir score'}</button>
+            ${!passed?`<button class="ca-btn ca-noshow" onclick="markNoshow('${id}')">No-show</button>`:''}
+          </div>
+          <div class="timer-display" style="display:none">12:00</div>
+          <div class="score-panel" id="sp-${id}">
+            <div id="sp-qgrid-${id}" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;"></div>
+            <div id="sp-circles-${id}" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <div class="score-disp-row">
+              <div class="score-disp-cell"><label>Base</label><span id="spb-${id}" style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:var(--gold)">0/20</span></div>
+              <div class="score-disp-cell"><label>Bonus</label><span id="spbns-${id}" style="font-family:'JetBrains Mono',monospace;font-size:1.4rem;color:var(--success)">+0</span></div>
+              <div class="score-disp-cell"><label>Total</label><span id="sptot-${id}" style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#F0D060">0/25</span></div>
+            </div>
+            <textarea class="sp-textarea" id="spcmt-${id}" placeholder="Commentaire jury...">${esc(sc?sc.juryComment||'':'')}</textarea>
+            <button class="sp-save" onclick="saveScore('${id}')">Enregistrer le score</button>
+            <button class="sp-cancel" onclick="closeScorePanel('${id}')">Annuler</button>
+          </div>
+        `;
+        list.appendChild(card);
+        // Init question state
+        if(!window._qs)window._qs={};
+        if(!window._qs[id])window._qs[id]=Array(10).fill(null).map(()=>({correct:false,time:60}));
+      });
+    }));
+
+    // 10-QUESTION STATE PER CANDIDATE
+    window._qs={};
+
+    function calcBonus(qs){
+      const correct=qs.filter(q=>q.correct);
+      if(correct.length===0)return 0;
+      const avgTime=correct.reduce((s,q)=>s+q.time,0)/correct.length;
+      if(avgTime<=30)return 5;
+      if(avgTime>=90)return 0;
+      return Math.round((90-avgTime)/12);
+    }
+
+    function renderSpQGrid(id){
+      const qs=window._qs[id]||(window._qs[id]=Array(10).fill(null).map(()=>({correct:false,time:60})));
+      const grid=document.getElementById('sp-qgrid-'+id);
+      if(!grid)return;
+      grid.innerHTML=qs.map((q,i)=>`
+        <div class="q-card ${q.correct?'correct':'incorrect'}">
+          <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;">Q${i+1}</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button onclick="spToggleQ('${id}',${i},true)" class="q-btn ${q.correct?'active-green':''}">Correct</button>
+            <button onclick="spToggleQ('${id}',${i},false)" class="q-btn ${!q.correct?'active-red':''}">Incorrect</button>
+          </div>
+          <label style="font-size:.72rem;color:var(--fg2)">Temps: <span id="sp-tv-${id}-${i}">${q.time}s</span></label>
+          <input type="range" min="0" max="120" value="${q.time}" oninput="spUpdateTime('${id}',${i},this.value)" style="width:100%;margin-top:3px;accent-color:var(--gold)">
+        </div>
+      `).join('');
+      updateSpScores(id);
+      updateSpCircles(id);
+    }
+
+    function updateSpScores(id){
+      const qs=window._qs[id]||[];
+      const correct=qs.filter(q=>q.correct).length;
+      const base=correct*2;
+      const bonus=calcBonus(qs);
+      const total=base+bonus;
+      const bel=document.getElementById('spb-'+id);
+      const bnel=document.getElementById('spbns-'+id);
+      const tel=document.getElementById('sptot-'+id);
+      if(bel)bel.textContent=base+'/20';
+      if(bnel)bnel.textContent='+'+bonus;
+      if(tel)tel.textContent=total+'/25';
+      updateSpCircles(id);
+    }
+
+    function updateSpCircles(id){
+      const qs=window._qs[id]||[];
+      const c=document.getElementById('sp-circles-'+id);
+      if(!c)return;
+      c.innerHTML=qs.map((q,i)=>`<div style="width:22px;height:22px;border-radius:50%;background:${q.correct?'#00D4AA':'#FF4444'};display:flex;align-items:center;justify-content:center;font-size:.65rem;color:white;font-weight:700">${i+1}</div>`).join('');
+    }
+
+    window.spToggleQ=(id,idx,correct)=>{
+      if(!window._qs[id])window._qs[id]=Array(10).fill(null).map(()=>({correct:false,time:60}));
+      window._qs[id][idx].correct=correct;
+      renderSpQGrid(id);
+    };
+
+    window.spUpdateTime=(id,idx,val)=>{
+      if(!window._qs[id])window._qs[id]=Array(10).fill(null).map(()=>({correct:false,time:60}));
+      window._qs[id][idx].time=parseInt(val);
+      const el=document.getElementById('sp-tv-'+id+'-'+idx);
+      if(el)el.textContent=val+'s';
+      updateSpScores(id);
+    };
+
+    window.toggleScorePanel=(id)=>{
+      const panel=document.getElementById('sp-'+id);
+      const wasOpen=panel.classList.contains('open');
+      panel.classList.toggle('open');
+      if(!wasOpen){
+        if(!window._qs[id])window._qs[id]=Array(10).fill(null).map(()=>({correct:false,time:60}));
+        renderSpQGrid(id);
+      }
+    };
+    window.closeScorePanel=(id)=>{document.getElementById('sp-'+id).classList.remove('open')};
+
+    window.saveScore=async(id)=>{
+      const reg=await get(ref(db,'/registrations/'+id));
+      if(!reg.exists())return;const r=reg.val();
+      const qs=window._qs[id]||Array(10).fill(null).map(()=>({correct:false,time:60}));
+      const correctCount=qs.filter(q=>q.correct).length;
+      const scoreBase=correctCount*2;
+      const speedBonus=calcBonus(qs);
+      const totalScore=scoreBase+speedBonus;
+      const comment=document.getElementById('spcmt-'+id).value.trim();
+      await push(ref(db,'/scores'),{candidateId:id,firstName:r.firstName,lastName:r.lastName,school:r.school||null,scoreBase,speedBonus,totalScore,questionDetails:qs,juryComment:comment||null,juryId:juryData.juryId,phase:r.phase||'qualif',timestamp:Date.now()});
+      await update(ref(db,'/registrations/'+id),{status:'passed'});
+      showToast('Score enregistre !');closeScorePanel(id);
+    };
+
+    window.markNoshow=async(id)=>{
+      if(!confirm('Marquer ce candidat comme no-show ?'))return;
+      await update(ref(db,'/registrations/'+id),{status:'noshow'});showToast('No-show enregistré.');
+    };
+
+    window.startSession=(id,btn)=>{
+      const card=document.getElementById('cc-'+id);
+      let timerEl=card.querySelector('.timer-display');
+      timerEl.style.display='block';
+      btn.textContent='⏱ En cours';btn.disabled=true;
+      card.classList.add('active-session');
+      startTimer(id,card);
+      update(ref(db,'/registrations/'+id),{status:'assigned'});
+    };
+  </script>
+</body>
+</html>
